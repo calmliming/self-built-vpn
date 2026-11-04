@@ -13,7 +13,7 @@ sys.path.insert(0, str(PROJECT / 'scripts'))
 from settings import load_settings
 from manage import read_remote
 
-SOURCES = ['settings.py', 'operations.py', 'routing_rules.py', 'deploy_server.py', 'add_protocol_nodes.py', 'server_agent.py', 'team_agent.py', 'team_auth.py']
+SOURCES = ['settings.py', 'operations.py', 'routing_rules.py', 'deploy_server.py', 'add_protocol_nodes.py', 'server_agent.py', 'team_agent.py', 'team_auth.py', 'traffic_stats.py', 'quota_control.py']
 BOOTSTRAP = '''import json,os,pathlib,sys,tempfile
 os.umask(0o077)
 payload=json.loads(sys.stdin.readline())
@@ -39,12 +39,17 @@ def command(server):
     return settings_for(server).ssh_args() + ['sudo -n python3 -u -c ' + shlex.quote(BOOTSTRAP)]
 
 def probe(server):
+    report = read_action(server, 'probe')
+    return report
+
+def read_action(server, action, data=None):
     start = time.monotonic()
-    result = subprocess.run(command(server), input=json.dumps(payload_for(server, 'probe', {})) + '\n', capture_output=True, text=True, timeout=80)
+    result = subprocess.run(command(server), input=json.dumps(payload_for(server, action, data or {})) + '\n', capture_output=True, text=True, timeout=80)
     if result.returncode:
         raise RuntimeError('SSH 诊断失败，请检查服务器连接或任务记录')
     report = json.loads(result.stdout)
-    report['ssh_roundtrip_ms'] = round((time.monotonic() - start) * 1000)
+    if action == 'probe':
+        report['ssh_roundtrip_ms'] = round((time.monotonic() - start) * 1000)
     return report
 
 def transaction(server, action, data, verify, log_dir):

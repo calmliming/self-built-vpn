@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import String, Text, Integer, Boolean, Float, ForeignKey, UniqueConstraint, Index, text
+from sqlalchemy import String, Text, Integer, BigInteger, Boolean, Float, ForeignKey, UniqueConstraint, Index, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from .security import identity
 
@@ -20,6 +20,10 @@ class User(Base):
     deleted: Mapped[bool] = mapped_column(Boolean, default=False)
     regions: Mapped[str] = mapped_column(Text, default='["hk","sg","us"]')
     exit_region: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    traffic_limit_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True, default=500 * 1024**3)
+    traffic_period: Mapped[str] = mapped_column(String(16), default='month')
+    traffic_enforced: Mapped[bool] = mapped_column(Boolean, default=True)
+    include_legacy_traffic: Mapped[bool] = mapped_column(Boolean, default=False)
     credential_blob: Mapped[str] = mapped_column(Text)
     token_blob: Mapped[str] = mapped_column(Text)
     token_digest: Mapped[str] = mapped_column(String(64), unique=True)
@@ -69,6 +73,7 @@ class Task(Base):
     __table_args__ = (
         Index('uq_active_member_sync', 'user_id', unique=True, sqlite_where=text("kind = 'sync' AND status IN ('queued', 'running')")),
         Index('uq_active_speedtest', 'kind', unique=True, sqlite_where=text("kind = 'speedtest' AND status IN ('queued', 'running')")),
+        Index('uq_active_traffic', 'kind', unique=True, sqlite_where=text("kind = 'traffic' AND status IN ('queued', 'running')")),
     )
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=identity)
     kind: Mapped[str] = mapped_column(String(24))
@@ -91,6 +96,13 @@ class NodeSpeed(Base):
     task_id: Mapped[str] = mapped_column(ForeignKey('tasks.id'))
     tested_at: Mapped[str] = mapped_column(String(40))
     result: Mapped[str] = mapped_column(Text)
+
+class TrafficSnapshot(Base):
+    __tablename__ = 'traffic_snapshots'
+    server_id: Mapped[str] = mapped_column(ForeignKey('servers.id'), primary_key=True)
+    data: Mapped[str] = mapped_column(Text, default='{}')
+    collected_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 class Audit(Base):
     __tablename__ = 'audit'

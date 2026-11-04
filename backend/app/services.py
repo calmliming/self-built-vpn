@@ -39,6 +39,7 @@ def bootstrap():
         if not db.scalar(select(User.id).limit(1)):
             db.flush()
             user, password = create_member(db, 'admin', '管理员', 'admin')
+            user.include_legacy_traffic = True
             path = STATE / '管理员登录.txt'
             path.write_text('Self VPN 管理后台\n账号：admin\n密码：' + password + '\n请登录后在系统设置中修改密码。\n此文件与 master.key、panel.db 均属于私人数据。\n', encoding='utf-8')
             path.chmod(0o600)

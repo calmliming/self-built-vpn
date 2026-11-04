@@ -4,6 +4,7 @@ import { api } from './api';
 import { Badge, Empty, time } from './components';
 import type { Dashboard, Node, SpeedSample, SpeedTests, Task } from './types';
 import { regions } from './types';
+import ScrollableTable from './ScrollableTable';
 
 export function SpeedValue({sample}:{sample?:SpeedSample}) {
   if (!sample) return <span className="muted">尚未测速</span>;
@@ -58,11 +59,11 @@ export default function NodePanel(p:{data:Dashboard;onTask:(task:Task)=>void;not
       <label className="search"><Search size={16}/><input placeholder="搜索节点或 IP" value={search} onChange={e=>setSearch(e.target.value)}/></label>
       <select aria-label="筛选协议" value={protocol} onChange={e=>setProtocol(e.target.value)}><option value="all">全部协议</option>{['vless','trojan','hysteria2','http','socks5'].map(t=><option key={t} value={t}>{t.toUpperCase()}</option>)}</select></div>
     {error&&<div className="notice amber">{error}</div>}
-    {!nodes?<div className="loading"><LoaderCircle size={25} className="spin"/>正在读取节点与测速结果</div>:<div className="table-scroll"><table><thead><tr><th>节点名称</th><th>地区</th><th>协议</th><th>地址与端口</th><th>实际下载</th><th>服务器状态</th></tr></thead><tbody>{rows?.map(n=><tr key={n.server+':'+n.port}>
+    {!nodes?<div className="loading"><LoaderCircle size={25} className="spin"/>正在读取节点与测速结果</div>:<ScrollableTable label="节点与下载测速结果"><table><thead><tr><th>节点名称</th><th>地区</th><th>协议</th><th>地址与端口</th><th>实际下载</th><th>服务器状态</th></tr></thead><tbody>{rows?.map(n=><tr key={n.server+':'+n.port}>
       <td><span className="node-name"><Network size={17}/><strong>{n.name}</strong></span></td><td>{regions[n.server_id]}</td>
       <td><span className={'protocol '+(n.type==='hysteria2'?'blue-text':'')}>{n.type==='vless'?'VLESS · REALITY':n.type.toUpperCase()}</span><small>{n.transport} · TLS 验证开启{n.type==='hysteria2'?' · 自动优先':''}</small></td>
       <td className="mono">{n.server}:{n.port}</td><td><SpeedValue sample={samples.get(n.server_id+':'+n.name)}/></td><td><Badge state={n.health}/></td>
-    </tr>)}</tbody></table>{!rows?.length&&<Empty>没有符合条件的节点</Empty>}</div>}
+    </tr>)}</tbody></table>{!rows?.length&&<Empty>没有符合条件的节点</Empty>}</ScrollableTable>}
     <p className="hint speed-footnote">Mbps 为平均下载速率；限时采样按已接收数据计算。单次小文件测速不能代表长期带宽，不会自动改动你的客户端选择。</p>
   </section>;
 }

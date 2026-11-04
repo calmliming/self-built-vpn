@@ -196,7 +196,7 @@ def install_xray():
     return changed
 
 
-def apply_nginx(site, transaction, certificate_changed=False):
+def apply_nginx(site, transaction, certificate_changed=False, includes_changed=False):
     validate_nginx(site)
     changed = write('/etc/nginx/sites-available/self-vpn', site, 0o644)
     enabled = Path('/etc/nginx/sites-enabled/self-vpn')
@@ -211,7 +211,7 @@ def apply_nginx(site, transaction, certificate_changed=False):
         default.unlink()
         changed = True
     run(['nginx', '-t'])
-    apply_service('nginx', changed or certificate_changed, transaction, reload_service=True)
+    apply_service('nginx', changed or certificate_changed or includes_changed, transaction, reload_service=True)
 
 
 def write_candidate(secret, settings, client):

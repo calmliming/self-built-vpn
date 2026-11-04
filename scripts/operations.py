@@ -106,6 +106,10 @@ def managed_paths():
     paths += [Path('/etc/letsencrypt/live/self-vpn-ip'), Path('/etc/letsencrypt/archive/self-vpn-ip'), Path('/etc/letsencrypt/renewal/self-vpn-ip.conf')]
     paths += [BASE / name for name in ['team-managed', 'team-members.json', 'team-auth-users.json', 'team-auth-state.json', 'team_auth.py', 'team-publications.json']]
     paths += [Path('/etc/systemd/system/self-vpn-team-auth.service'), Path('/etc/nginx/self-vpn-team'), Path('/var/lib/self-vpn/team-subscriptions')]
+    paths += [BASE / 'traffic_stats.py', BASE / 'operations.py', Path('/var/lib/self-vpn/traffic/subscriptions.json')]
+    paths += [BASE / name for name in ['quota_control.py', 'quota-control.json', 'quota-client.json', 'quota-coordinator.json']]
+    paths += [Path('/etc/systemd/system/self-vpn-traffic.' + suffix) for suffix in ['service', 'timer']]
+    paths += [Path('/etc/systemd/system/timers.target.wants/self-vpn-traffic.timer')]
     # Generated credentials deliberately survive a failed first installation.
     return paths
 

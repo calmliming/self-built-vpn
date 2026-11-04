@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from backend.app.db import migrate, SessionLocal, engine
-from backend.app.models import Base, Server, User, AccessState, Task, Session, Audit, NodeSpeed
+from backend.app.models import Base, Server, User, AccessState, Task, Session, Audit, NodeSpeed, TrafficSnapshot, now
 from backend.app.security import seal, unseal, password_matches, new_credentials
 from backend.app.services import create_member, queue_task
 from backend.app.main import create_app
@@ -60,6 +60,108 @@ def signed(client, username='admin'):
     assert result.status_code == 200
     client.headers['X-CSRF-Token'] = result.json()['csrf']
     return result.json()['user']
+
+def test_traffic_quota_requires_admin_and_keeps_credentials_and_usage(client, state):
+    from traffic_stats import month_key
+    signed(client, 'member')
+    assert client.patch('/api/members/' + state[1] + '/quota', json={'total_bytes': 500_000_000_000, 'period': 'month'}).status_code == 403
+    client.post('/api/auth/logout')
+    signed(client)
+    ready_member(state[1])
+    with SessionLocal.begin() as db:
+        member = db.get(User, state[1])
+        original = (member.credential_blob, member.token_blob, member.revision, member.published_revision)
+        db.add(TrafficSnapshot(server_id='us', collected_at=now(), data=json.dumps({
+            'started_at': now(), 'sampled_at': {'xray': now(), 'xray-extra': now(), 'hysteria2': now()},
+            'users': {member.id: {'upload': 100, 'download': 900, 'months': {month_key(): {'upload': 100, 'download': 900}}}}})))
+    response = client.patch('/api/members/' + state[1] + '/quota', json={'total_bytes': 500_000_000_000, 'period': 'month'})
+    assert response.status_code == 200
+    value = response.json()
+    assert value['traffic']['used_bytes'] == 1000 and value['traffic']['remaining_bytes'] == 499_999_999_000
+    assert value['traffic']['status'] == 'partial' and value['ready']
+    with SessionLocal() as db:
+        member = db.get(User, state[1])
+        assert original == (member.credential_blob, member.token_blob, member.revision, member.published_revision)
+        assert db.scalar(select(Task).where(Task.kind == 'traffic'))
+    for total in [0, -5, True, 1.5, 9_000_000_000_000_001]:
+        assert client.patch('/api/members/' + state[1] + '/quota', json={'total_bytes': total}).status_code == 422
+    assert client.patch('/api/members/' + state[1] + '/quota', json={'total_bytes': None, 'period': 'month'}).json()['traffic']['used_bytes'] == 1000
+
+def test_traffic_is_private_and_not_reported_as_zero_before_first_collection(client, state):
+    signed(client, 'member')
+    member = client.get('/api/members').json()[0]
+    assert member['traffic']['total_bytes'] == 500 * 1024**3
+    assert member['traffic']['period'] == 'month'
+    assert member['traffic']['status'] == 'pending' and member['traffic']['used_bytes'] is None
+    with SessionLocal.begin() as db:
+        db.add(TrafficSnapshot(server_id='us', collected_at=now(), data=json.dumps({'sampled_at': {'hysteria2': now()}, 'users': {
+            state[0]: {'upload': 100, 'download': 999999}, 'legacy-owner': {'download': 50000}}})))
+    response = client.get('/api/members')
+    assert len(response.json()) == 1
+    assert response.json()[0]['traffic']['used_bytes'] == 0
+    assert '999999' not in response.text and '50000}' not in response.text
+    assert client.post('/api/traffic/refresh').json() == {'status': 'queued'}
+    assert client.post('/api/traffic/refresh').status_code == 202
+    with SessionLocal() as db:
+        assert len(db.scalars(select(Task).where(Task.kind == 'traffic')).all()) == 1
+
+def test_unavailable_protocols_do_not_invent_zero_usage(client, state):
+    signed(client, 'member')
+    with SessionLocal.begin() as db:
+        db.add(TrafficSnapshot(server_id='us', collected_at=now(), data=json.dumps({
+            'version': 1, 'users': {}, 'sampled_at': {}, 'errors': {'hysteria2': 'unavailable'}})))
+    value = client.get('/api/members').json()[0]['traffic']
+    assert value['used_bytes'] is None and value['status'] == 'pending'
+
+def test_collection_failure_preserves_last_snapshot_and_later_catches_up(state):
+    from traffic_stats import month_key
+    from backend.app.traffic import traffic_data
+    report = {'version': 1, 'checked_at': now(), 'started_at': now(), 'errors': {},
+              'sampled_at': {'xray': now(), 'xray-extra': now(), 'hysteria2': now()},
+              'users': {state[1]: {'upload': 10, 'download': 30, 'months': {month_key(): {'upload': 10, 'download': 30}}}}}
+    with SessionLocal.begin() as db:
+        task = queue_task(db, 'traffic', '测试流量采集')
+        db.add(TrafficSnapshot(server_id='hk', data=json.dumps(report), collected_at=now()))
+    def read(server, action, data=None):
+        if action == 'traffic-metadata':
+            assert len(data['policies']) == 2
+            return {'updated': True}
+        if server.id == 'hk':
+            raise RuntimeError('Offline sample')
+        return report
+    with patch('backend.app.remote.read_action', side_effect=read):
+        assert worker.traffic_task(task) == 'partial'
+    with SessionLocal() as db:
+        assert db.get(TrafficSnapshot, 'hk').error
+        member = db.get(User, state[1])
+        value = traffic_data(db, member)
+        assert value['used_bytes'] == 120 and value['status'] == 'partial'
+
+def test_quota_pause_keeps_login_and_subscription_and_blocks_speed_tests(client, state):
+    signed(client)
+    ready_member(state[0])
+    with SessionLocal.begin() as db:
+        for code in ['hk','sg','us']:
+            db.add(TrafficSnapshot(server_id=code, collected_at=now(), data=json.dumps({
+                'sampled_at': {'xray':now(),'xray-extra':now(),'hysteria2':now()},
+                'quota':{'enabled':True,'error':None,'apply_error':None,'reasons':{state[0]:'quota-exhausted'}}})))
+    value=client.get('/api/auth/me').json()['user']
+    assert value['traffic']['enforced'] and value['traffic']['quota_status']=='blocked'
+    assert value['enabled'] and value['subscription_url'] and value['ready']
+    assert client.post('/api/speed-tests',json={'region':'us'}).status_code==409
+    assert client.post('/api/servers/us/verify').status_code==409
+
+def test_blocked_member_can_rotate_or_revoke_without_becoming_unlimited(state):
+    with SessionLocal.begin() as db:
+        task=queue_task(db,'sync','测试已满额成员更新',user_id=state[1])
+    def transaction(server, action, data, verify, folder):
+        receipt={'digest':fingerprint(data['members']),'member_count':len(data['members']),'quota_blocked':[state[1]]}
+        assert all(policy['enforce'] for policy in data['traffic_metadata']['policies'])
+        verify(receipt)
+        return receipt
+    with patch('backend.app.remote.transaction',side_effect=transaction), patch('backend.app.remote.probe',return_value={'healthy':True,'team_managed':True,'team_auth_active':True}), patch('backend.app.checks.verify_member',return_value={'verified':True}) as allowed, patch('backend.app.checks.verify_denied',return_value={}) as denied, patch('backend.app.worker.publication'):
+        assert worker.sync_task(task)=='succeeded'
+    assert denied.call_count==3 and all(call.args[0].id==state[0] for call in allowed.call_args_list)
 
 def test_authentication_and_csrf_are_required(client):
     assert client.get('/api/dashboard').status_code == 401

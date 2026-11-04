@@ -26,6 +26,7 @@ from .models import User, Session, Server, AccessState, Task, Audit, NodeSpeed, 
 from .security import digest, password_matches, password_hash, seal, unseal, new_credentials
 from .services import bootstrap, create_member, queue_task, task_data, audit
 from .subscriptions import subscription_url, REGIONS
+from .traffic import traffic_data
 
 class Input(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -63,6 +64,10 @@ class SpeedTest(Input):
 class ExitPolicy(Input):
     region: Literal['hk', 'sg', 'us'] | None = None
 
+class TrafficQuota(Input):
+    total_bytes: int | None = Field(default=None, gt=0, le=9_000_000_000_000_000, strict=True)
+    period: Literal['lifetime', 'month'] = 'month'
+
 def database():
     with SessionLocal() as db:
         yield db
@@ -77,6 +82,7 @@ def user_data(db, user):
         'credential_version': user.credential_version, 'created_at': user.created_at, 'last_login': user.last_login,
         'note': user.note, 'ready': ready, 'sync_complete': synced,
         'subscription_url': subscription_url(user, us) if ready and us else None,
+        'traffic': traffic_data(db, user),
         'sync': [{'server_id': s.server_id, 'status': 'synced' if s.applied_revision == user.revision and s.status == 'synced' else 'pending',
             'applied_enabled': s.applied_enabled, 'error': s.error, 'updated_at': s.updated_at} for s in access]}
 
@@ -251,6 +257,8 @@ def create_app(bootstrap_state=True, run_worker=True):
             raise HTTPException(404, '服务器不存在')
         if not user_data(db, user)['ready']:
             raise HTTPException(409, '请等待自己的订阅同步完成后再验收')
+        if user_data(db, user)['traffic']['quota_status'] == 'blocked':
+            raise HTTPException(409, '当前订阅已因额度暂停，请恢复额度后再验收')
         task = queue_task(db, 'verify', '验证全部入口' if code == 'all' else '验证' + REGIONS[code] + '入口', actor_id=user.id, server_id=None if code == 'all' else code)
         audit(db, user.username, '公网入口验收', code)
         db.commit()
@@ -291,6 +299,8 @@ def create_app(bootstrap_state=True, run_worker=True):
             raise HTTPException(403, '只能测速自己的授权地区')
         if not user_data(db, user)['ready']:
             raise HTTPException(409, '请等待自己的订阅同步完成后再测速')
+        if user_data(db, user)['traffic']['quota_status'] == 'blocked':
+            raise HTTPException(409, '当前订阅已因额度暂停，请恢复额度后再测速')
         if db.scalar(select(Task.id).where(Task.kind == 'speedtest', Task.status.in_(['queued', 'running'])).limit(1)):
             raise HTTPException(409, '已有下载测速任务，请等待完成')
         busy(db, user.id)
@@ -331,6 +341,28 @@ def create_app(bootstrap_state=True, run_worker=True):
         audit(db, user.username, '编辑成员', member.display_name)
         db.commit()
         return task_data(task)
+
+    @app.patch('/api/members/{member_id}/quota')
+    def change_quota(member_id: str, body: TrafficQuota, user: User = Depends(admin), db: DatabaseSession = Depends(database)):
+        member = db.get(User, member_id)
+        if not member or member.deleted:
+            raise HTTPException(404, '成员不存在')
+        member.traffic_limit_bytes, member.traffic_period = body.total_bytes, body.period
+        # This is display metadata: no credential revision or service restart.
+        if not db.scalar(select(Task.id).where(Task.kind == 'traffic', Task.status.in_(['queued', 'running']))):
+            queue_task(db, 'traffic', '刷新订阅流量额度', actor_id=user.id)
+        audit(db, user.username, '更新订阅流量额度', member.display_name)
+        db.commit()
+        return user_data(db, member)
+
+    @app.post('/api/traffic/refresh', status_code=202)
+    def refresh_traffic(user: User = Depends(current), db: DatabaseSession = Depends(database)):
+        existing = db.scalar(select(Task).where(Task.kind == 'traffic', Task.status.in_(['queued', 'running'])).limit(1))
+        if existing:
+            return task_data(existing) if user.role == 'admin' else {'status': 'queued'}
+        task = queue_task(db, 'traffic', '刷新订阅流量用量', actor_id=user.id)
+        db.commit()
+        return task_data(task) if user.role == 'admin' else {'status': 'queued'}
 
     @app.post('/api/members/{member_id}/actions')
     def member_action(member_id: str, body: MemberAction, user: User = Depends(current), db: DatabaseSession = Depends(database)):

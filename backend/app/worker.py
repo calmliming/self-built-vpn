@@ -12,7 +12,7 @@ import signal
 from sqlalchemy import select
 from .config import RUNTIME
 from .db import SessionLocal
-from .models import Task, User, Server, AccessState, NodeSpeed, now
+from .models import Task, User, Server, AccessState, NodeSpeed, TrafficSnapshot, now
 from .security import seal, unseal
 from .services import queue_task
 from . import remote
@@ -42,6 +42,8 @@ def publication(user, servers, task_id, revoke=False, context=None):
     url = subscription_url(user, us)
     content = json.dumps(fleet(user, servers), ensure_ascii=False, indent=2) if not revoke else None
     data = {'user_id': user.id, 'token': None if revoke else unseal(user.token_blob)}
+    from .traffic import traffic_policy
+    data['traffic_policy'] = traffic_policy(user)
     if content:
         data.update(content=content, digest=hashlib.sha256(content.encode()).hexdigest())
     folder = RUNTIME / 'tasks' / task_id / 'publication'
@@ -91,17 +93,21 @@ def sync_task(task):
                 from team_agent import fingerprint
                 if receipt['digest'] != fingerprint(members):
                     raise RuntimeError('服务器成员配置摘要不匹配')
-                control = user if not disabled and server.id in json.loads(user.regions) else next((u for u in users if u.enabled and not u.deleted and u.id != user.id and server.id in json.loads(u.regions)), None)
+                blocked = set(receipt.get('quota_blocked', []))
+                control = user if not disabled and server.id in json.loads(user.regions) and user.id not in blocked else next((u for u in users if u.enabled and not u.deleted and u.id != user.id and u.id not in blocked and server.id in json.loads(u.regions)), None)
                 if control:
                     report = verify_member(control, server, us, folder)
                     if not report['verified']:
                         raise RuntimeError('公网节点验收失败')
-                if disabled or server.id not in json.loads(user.regions):
+                if disabled or server.id not in json.loads(user.regions) or user.id in blocked:
                     verify_denied(user, server, folder)
-                elif context.get('previous_credentials'):
+                if context.get('previous_credentials'):
                     old_user = SimpleNamespace(credential_blob=seal(context['previous_credentials']))
                     verify_denied(old_user, server, folder)
-            receipt = remote.transaction(server, 'sync', {'members': members}, verify, folder)
+            from .traffic import metadata
+            with SessionLocal() as db:
+                traffic_metadata = metadata(db, server.id)
+            receipt = remote.transaction(server, 'sync', {'members': members, 'traffic_metadata': traffic_metadata}, verify, folder)
             with SessionLocal.begin() as db:
                 for member in users:
                     access = db.scalar(select(AccessState).where(AccessState.user_id == member.id, AccessState.server_id == server.id))
@@ -230,6 +236,42 @@ def republish_task(task):
     publication(user, servers, task.id)
     return 'succeeded'
 
+def traffic_task(task):
+    from .traffic import metadata
+    with SessionLocal() as db:
+        servers = db.scalars(select(Server)).all()
+    passed = 0
+    for server in servers:
+        try:
+            report = remote.read_action(server, 'traffic')
+            if report.get('version') != 1 or not report.get('checked_at'):
+                raise RuntimeError('Invalid counter response')
+            with SessionLocal.begin() as db:
+                db.merge(TrafficSnapshot(server_id=server.id, data=json.dumps(report), collected_at=now(),
+                                       error='部分协议统计暂时不可用' if report.get('errors') else None))
+            passed += not bool(report.get('errors'))
+        except Exception:
+            with SessionLocal.begin() as db:
+                item = db.get(TrafficSnapshot, server.id)
+                if not item:
+                    item = TrafficSnapshot(server_id=server.id, data='{}')
+                    db.add(item)
+                item.error = '流量采集失败，保留最近用量'
+    published = 0
+    for server in servers:
+        try:
+            with SessionLocal() as db:
+                value = metadata(db, server.id)
+            remote.read_action(server, 'traffic-metadata', value)
+            published += 1
+        except Exception:
+            log.warning('Traffic metadata update failed for %s', server.id)
+    task_event(task.id, 'traffic', 'succeeded' if passed == len(servers) and published == len(servers) else 'failed',
+               f'已采集 {passed}/{len(servers)} 个地区，已更新 {published}/{len(servers)} 个地区订阅额度')
+    if passed == len(servers) and published == len(servers):
+        return 'succeeded'
+    return 'partial' if passed or published else 'failed'
+
 class Worker:
     def __init__(self):
         self.stop_event = threading.Event()
@@ -248,6 +290,7 @@ class Worker:
 
     def loop(self):
         last_probe = time.monotonic()
+        last_traffic = 0
         while not self.stop_event.is_set():
             task = None
             try:
@@ -257,10 +300,16 @@ class Worker:
                         task.status, task.error = 'running', None
                 if task:
                     status = {'sync': sync_task, 'probe': probe_task, 'verify': verify_task,
-                              'speedtest': speedtest_task, 'republish': republish_task}[task.kind](task)
+                              'speedtest': speedtest_task, 'republish': republish_task, 'traffic': traffic_task}[task.kind](task)
                     with SessionLocal.begin() as db:
                         current = db.get(Task, task.id)
                         current.status, current.finished_at = status, now()
+                    if task.kind == 'traffic':
+                        last_traffic = time.monotonic()
+                elif time.monotonic() - last_traffic > 120:
+                    with SessionLocal.begin() as db:
+                        queue_task(db, 'traffic', '定时流量用量刷新')
+                    last_traffic = time.monotonic()
                 elif time.monotonic() - last_probe > 120:
                     with SessionLocal.begin() as db:
                         queue_task(db, 'probe', '定时服务器状态检查')
