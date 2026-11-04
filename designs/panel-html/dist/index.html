@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7fa">
+  <meta name="description" content="Self VPN 个人代理管理面板：大圆角、扁平风格的交互设计原型。">
+  <title>Self VPN · 个人代理管理</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 5 7v9c0 6 7 11 11 13 4-2 11-7 11-13V7Z' fill='%232563eb'/%3E%3C/svg%3E">
+  <style>
+:root {
+  --canvas:#f5f7fa;--surface:#fff;--ink:#192338;--muted:#748096;
+  --line:#e3e8f0;--blue:#2563eb;--blue-dark:#1d4ed8;--blue-soft:#edf3ff;
+  --green:#249661;--green-soft:#eaf8ef;--amber:#bc760b;--amber-soft:#fff6e5;
+  --red:#d44747;--red-soft:#fff0ef;--radius:30px;--field-radius:18px;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  color:var(--ink);background:var(--canvas);font-synthesis:none;font-size:14px;
+}
+*{box-sizing:border-box}body{margin:0;min-width:320px}button,input,select,textarea{font:inherit}
+button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.45}
+button{color:inherit}a{color:var(--blue);text-decoration:none}button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #a6c3ff;outline-offset:3px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#7da5fb;background:#fff}
+input,select,textarea{min-width:0;color:var(--ink)}h1,h2,h3,h4,p{margin:0}h1{font-size:30px;line-height:1.35;letter-spacing:-.7px;font-weight:700}
+h2{font-size:18px;line-height:1.4;letter-spacing:-.2px}h3{font-size:16px;line-height:1.45}p{line-height:1.7}
+.icon{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:middle}
+.skip-link{position:fixed;top:-70px;left:20px;padding:12px 20px;background:#fff;border:1px solid var(--blue);z-index:1000;border-radius:999px}.skip-link:focus{top:12px}
+.sidebar{position:fixed;z-index:40;left:16px;top:16px;bottom:16px;width:224px;padding:26px 12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:36px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:12px;padding:0 16px 28px}.brand>.icon{width:31px;height:35px;stroke-width:1.65}.brand strong{font-size:22px;letter-spacing:-.7px;display:block}.brand small{color:var(--muted);display:block;font-size:12px;margin-top:4px}
+.nav-list{display:flex;flex-direction:column;gap:6px}.nav-link{display:flex;align-items:center;gap:14px;min-height:46px;padding:11px 18px;border-radius:999px;color:#5c6679;font-weight:500;font-size:14px}
+.nav-link:hover{background:#f6f8fc;color:var(--ink)}.nav-link.active{color:var(--blue);background:var(--blue-soft);font-weight:650}.nav-link .icon{width:21px}.nav-badge{margin-left:auto;min-width:20px;padding:2px 6px;background:#dce9ff;border-radius:999px;font-size:11px;text-align:center;color:var(--blue)}
+.sidebar-bottom{margin-top:auto;padding:18px 17px 2px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:13px;color:#536175}.dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;flex:none}.sidebar-bottom .dot{color:var(--green)}
+.sidebar-demo{display:none;margin:18px 10px 14px;gap:8px;align-items:center;justify-content:center}.sidebar-demo .icon{width:15px;height:15px}
+.main{margin-left:256px;padding:29px 30px 16px;max-width:2000px}.page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;min-height:108px;padding:1px 2px 24px}
+.breadcrumb{font-size:12px;color:#8490a3;margin-bottom:8px;display:flex;gap:8px;align-items:center}.subtitle{font-size:13px;color:var(--muted);margin-top:7px}.header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:20px}.demo-badge{font-size:11px;padding:9px 13px;color:#718096;border:1px solid var(--line);background:#fff;border-radius:999px;white-space:nowrap}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:39px;padding:9px 18px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:12px;font-weight:550;line-height:1.4;white-space:nowrap;transition:background .15s,border-color .15s,color .15s}
+.button:hover{background:#f7f9fc;border-color:#c9d3e3}.button.primary{background:var(--blue);border-color:var(--blue);color:white}.button.primary:hover{background:var(--blue-dark)}.button.danger{background:var(--red);border-color:var(--red);color:#fff}.button.outline-danger{color:var(--red);border-color:#f4c9c7}.button.outline-amber{color:var(--amber);border-color:#f0d3a2}.button.text{border-color:transparent;background:transparent;color:var(--blue);padding:7px 0;min-height:30px}.button.small{min-height:31px;padding:6px 12px;font-size:11px}.button .icon{width:16px;height:16px}
+.icon-button{width:37px;height:37px;border:1px solid var(--line);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#fff;flex:none}.icon-button:hover{background:#f4f7fc;color:var(--blue)}.icon-button .icon{width:17px;height:17px}.icon-button.small{width:30px;height:30px}.icon-button.borderless{border-color:transparent;background:transparent}.icon-button.danger{color:var(--red)}
+.row{display:flex;align-items:center;gap:12px}.between{display:flex;align-items:center;justify-content:space-between;gap:16px}.actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:18px}.gap-sm{gap:10px}.grid{display:grid;gap:18px}.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:25px}.server-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:23px;min-width:0}.card.compact{padding:20px 22px}.card-header{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:22px}.card-header h2,.card-header h3{margin:0}.section-heading{font-size:16px;margin:0 3px 13px;display:flex;align-items:center;justify-content:space-between}
+.stat-card{padding:19px 21px 18px;position:relative;min-height:116px}.stat-label{font-size:12px;color:#5c687c;font-weight:550;margin-bottom:9px}.stat-value{font-size:29px;line-height:1.1;letter-spacing:-1px;font-weight:650}.stat-note{font-size:11px;color:var(--muted);margin-top:10px}.stat-icon{position:absolute;right:22px;top:42px;color:#536580}.stat-icon .icon{width:28px;height:28px}.stat-note.amber{color:var(--amber)}
+.server-heading{padding-bottom:16px;margin-bottom:15px;border-bottom:1px solid #edf0f5}.server-heading .icon{width:24px;height:24px;color:#5e6a7c}.server-heading h3{font-size:17px}.secondary{font-size:12px;color:var(--muted);margin-top:4px}.meta-grid{display:grid;grid-template-columns:87px minmax(0,1fr);gap:12px 10px;font-size:12px;align-items:center}.meta-grid dt{color:var(--muted)}.meta-grid dd{margin:0;overflow-wrap:anywhere}.server-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:19px}
+.badge{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:5px 9px;line-height:1.25;border-radius:999px;font-size:10px;font-weight:550;white-space:nowrap;color:#707c90;background:#f1f4f8;max-width:100%}.badge.green{color:var(--green);background:var(--green-soft)}.badge.amber{color:var(--amber);background:var(--amber-soft)}.badge.blue{color:var(--blue);background:var(--blue-soft)}.badge.red{color:var(--red);background:var(--red-soft)}.badge .dot{width:5px;height:5px}.badge .icon{width:12px;height:12px}
+.overview-bottom{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(290px,1fr);gap:18px}.split{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(300px,1fr);gap:20px;align-items:start}.split.equal{grid-template-columns:1fr 1fr}.split.diagnostic{grid-template-columns:minmax(250px,.8fr) minmax(0,1.5fr)}.full{grid-column:1/-1}
+.table-wrap{overflow-x:auto;margin:0 -6px}.table-wrap table{width:100%;border-collapse:separate;border-spacing:0;white-space:nowrap;font-size:12px}.table-wrap th{text-align:left;background:#f5f7fa;color:#8791a2;font-size:11px;font-weight:550;padding:12px 13px}.table-wrap th:first-child{border-radius:16px 0 0 16px}.table-wrap th:last-child{border-radius:0 16px 16px 0}.table-wrap td{padding:17px 13px;border-bottom:1px solid #edf1f6;height:62px}.table-wrap tr:last-child td{border-bottom:0}.table-wrap tr.selected td{background:var(--blue-soft)}.table-wrap tr.selected td:first-child{border-radius:16px 0 0 16px}.table-wrap tr.selected td:last-child{border-radius:0 16px 16px 0}.table-wrap .name{font-weight:600;display:inline-flex;align-items:center;gap:9px}.table-wrap .name .icon{width:17px;height:17px;color:#67758c}.table-wrap .actions{flex-wrap:nowrap;gap:5px}.table-wrap .icon-button{width:29px;height:29px}.table-wrap .icon-button .icon{width:14px;height:14px}.table-wrap .button.text{font-size:11px}.table-wrap .muted{font-size:11px}
+.scope-tags{display:flex;gap:4px;align-items:center}.scope-tag{padding:4px 7px;font-size:10px;background:#f2f5f9;color:#748096;border-radius:999px}.table-footer{margin-top:18px;padding:10px 3px 0;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:10px}.pagination{display:flex;gap:4px}.page-number{height:28px;min-width:28px;border:0;background:transparent;border-radius:50%;font-size:11px}.page-number.active{background:var(--blue);color:#fff}
+.switch-label{display:inline-flex;align-items:center;gap:7px;font-size:11px;white-space:nowrap}.switch{border:0;background:#cbd2de;border-radius:999px;width:33px;height:19px;padding:3px;position:relative;flex:none}.switch::after{content:"";display:block;width:13px;height:13px;border-radius:50%;background:white;transition:transform .15s}.switch.on{background:var(--green)}.switch.on::after{transform:translateX(14px)}.switch.blue.on{background:var(--blue)}.switch:disabled{opacity:.7}.switch-input{appearance:none;cursor:pointer;position:relative;width:37px;height:22px;min-height:0;padding:0!important;border:0!important;background:#cbd2de;border-radius:999px;display:inline-block;flex:none}.switch-input::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;background:white;border-radius:50%;transition:transform .15s}.switch-input:checked{background:var(--blue)}.switch-input:checked::after{transform:translateX(15px)}
+.region-chain{display:flex;align-items:center;gap:9px;justify-content:space-between;margin:20px 0 14px}.region-chain>.icon{width:15px;height:15px;color:#9da7b7}.region-chain .badge{flex:1;padding:7px 9px}.hint{font-size:11px;color:var(--muted);line-height:1.7}.hint.amber{color:var(--amber)}.hint-icon{display:flex;align-items:flex-start;gap:8px}.hint-icon>.icon{width:15px;height:15px;margin-top:1px;flex:none}.activity-list{display:flex;flex-direction:column}.activity-item{padding:13px 0;display:flex;gap:10px;align-items:center;border-bottom:1px solid #edf1f6;font-size:11px}.activity-item:last-child{border:0}.activity-item>.icon{width:16px;height:16px;color:#8f9bae}.activity-item>div{flex:1;line-height:1.5}.activity-item time{font-size:10px;color:#97a1b1}
+.filters{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:21px}.pills{display:flex;gap:7px;flex-wrap:wrap;align-items:center}.pill{min-height:33px;padding:7px 15px;border:1px solid var(--line);background:#fff;color:#657187;border-radius:999px;font-size:11px;white-space:nowrap}.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}.pill small{margin-left:4px;opacity:.7;font-size:10px}.search{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 13px;min-width:190px;flex:0 1 280px;height:37px}.search>.icon{width:15px;height:15px;color:#8d99ad}.search input{border:0;padding:0!important;background:transparent;width:100%;font-size:11px;min-height:0;height:32px;outline:none}.filters select,.filters input[type=date]{height:36px;padding:5px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:11px}
+.server-list{display:flex;flex-direction:column;gap:13px}.server-list-item{display:flex;align-items:center;gap:18px;padding:21px;border:1px solid var(--line);border-radius:24px}.server-list-item>.icon{width:29px;height:29px;flex:none;color:#5b6b85}.server-identity{min-width:95px}.server-list-meta{flex:1;min-width:0;padding-left:18px;border-left:1px solid var(--line)}.server-list-meta .meta-grid{grid-template-columns:75px 1fr;font-size:11px;gap:9px}.server-list-item .actions{justify-content:flex-end}.pending-task{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid var(--line);border-radius:20px;padding:15px 18px;font-size:11px}.pending-task .row{gap:10px}.pending-task>.icon{color:#98a2b3}
+.field{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:12px}.field>span:first-child,.field>label:first-child{font-weight:550}.field small{font-size:10px;line-height:1.6;color:var(--muted);font-weight:400}.field input:not([type=checkbox]):not([type=radio]):not([type=file]),.field select,.field textarea{width:100%;border:1px solid #dce3ee;border-radius:var(--field-radius);padding:11px 14px;background:#fff;font-size:12px;min-height:42px;line-height:1.5}.field textarea{min-height:76px;resize:vertical;border-radius:20px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.form-stack{display:flex;flex-direction:column;gap:20px}.field-row{display:flex;align-items:center;gap:10px}.checkbox{display:inline-flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;line-height:1.6}.checkbox input{width:16px;height:16px;accent-color:var(--blue);margin:0;flex:none}.checkbox-group{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.checkbox-group .checkbox{padding:7px 0}.field-set{margin:0;padding:0;border:0;display:flex;flex-direction:column;gap:10px}.field-set legend{font-size:12px;font-weight:550;margin-bottom:9px}.file-picker{display:flex;gap:10px;align-items:center;border:1px solid var(--line);padding:10px 13px;border-radius:18px;cursor:pointer;font-size:12px;min-height:42px}.file-picker .icon{width:17px;height:17px}.file-picker input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.form-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:24px}.form-footer .hint{margin-right:auto}
+.notice{display:flex;align-items:flex-start;gap:9px;border-radius:18px;padding:13px 16px;background:#f5f7fa;font-size:11px;line-height:1.65;color:#6c7890}.notice .icon{width:16px;height:16px;flex:none;margin-top:1px}.notice.amber{background:var(--amber-soft);color:var(--amber)}.notice.blue{background:var(--blue-soft);color:var(--blue)}.notice.green{background:var(--green-soft);color:var(--green)}.notice.red{background:var(--red-soft);color:var(--red)}.page-notice{margin:0 0 20px;border-radius:999px;padding:13px 22px}
+.detail-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--line)}.detail-heading .row>.icon{width:25px;height:25px}.detail-list{display:flex;flex-direction:column;margin:0}.detail-list>div{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:13px 0;border-bottom:1px solid #edf1f6;font-size:12px}.detail-list>div:last-child{border:0}.detail-list dt{color:var(--muted)}.detail-list dd{margin:0;text-align:right;overflow-wrap:anywhere}.detail-section{margin-top:23px}.detail-section h3{font-size:13px;margin-bottom:13px}.mini-result{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:10px 13px;font-size:11px}.mini-result+.mini-result{margin-top:9px}.mini-result>.icon{width:17px;height:17px;color:#738198}.mini-result .badge{margin-left:auto}.sync-layout{display:grid;grid-template-columns:1.1fr 1fr;gap:25px;align-items:center}.sync-notes{display:flex;flex-direction:column;gap:13px;padding-left:23px;border-left:1px solid var(--line)}.change-summary{background:#f5f7fa;border-radius:18px;padding:15px;font-size:12px;line-height:1.7;margin:20px 0}.change-summary .muted{margin-right:12px}
+.routing-item{display:flex;align-items:center;gap:18px;padding:22px 0;border-bottom:1px solid #edf1f6}.routing-item:last-child{border:0}.routing-item>.icon{width:25px;height:25px;color:#60708a}.routing-item>div{flex:1}.routing-item strong{font-size:13px}.routing-item p{font-size:11px;color:var(--muted);margin-top:5px}.routing-item .badge{min-width:94px;padding:7px 12px}.resource-item{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 0;border-bottom:1px solid #edf1f6;font-size:11px}.resource-item:last-child{border:0}.resource-item>.icon{width:17px;height:17px;color:#8390a6}.resource-item time{font-size:10px;color:var(--muted);margin-left:auto}.order-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}.order-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border:1px solid var(--line);border-radius:16px;font-size:12px}.order-item>.icon{width:13px;height:13px;color:#a2acbc}.order-item .actions{margin-left:auto;gap:2px}.order-item .icon-button{width:23px;height:23px;border:0;background:#f5f7fa}.order-item .icon-button .icon{width:12px;height:12px}.inline-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:19px}.inline-fields .field{font-size:11px}.inline-fields .field input{min-height:37px;padding:7px 12px}.application-bar{display:flex;align-items:center;gap:20px;justify-content:space-between;margin-top:20px}.application-bar h3{font-size:13px;white-space:nowrap}.application-bar .checkbox-group{flex:1}
+.diagnostic-row{padding:18px;border:1px solid transparent;border-bottom-color:#edf1f6;border-radius:20px;display:flex;gap:12px;align-items:center;width:100%;background:#fff;text-align:left}.diagnostic-row.selected{background:var(--blue-soft);border-color:transparent}.diagnostic-row>.icon{width:22px;height:22px;color:#65738b}.diagnostic-row>div{flex:1}.diagnostic-row strong{font-size:12px}.diagnostic-row p{font-size:10px;color:var(--muted);margin-top:5px}.diagnostic-row time{font-size:11px;color:var(--muted)}.check-list{margin-top:17px;border:1px solid var(--line);border-radius:20px;padding:0 15px}.check-row{display:flex;align-items:center;gap:11px;padding:15px 0;border-bottom:1px solid #edf1f6;font-size:11px}.check-row:last-child{border:0}.step-number{width:23px;height:23px;border-radius:50%;background:#f1f4f8;display:flex;align-items:center;justify-content:center;color:#7c8799;font-size:10px}.check-row>strong{min-width:91px;font-weight:550}.check-row>.muted{flex:1;font-size:10px;line-height:1.6}.log-output{background:#f6f8fb;border:1px solid #eaf0f6;border-radius:20px;padding:18px;font-family:"SFMono-Regular",Consolas,monospace;font-size:11px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;color:#53637f;margin:15px 0 0}.report-footer{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-top:20px;margin-top:22px;border-top:1px solid var(--line)}
+.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);padding-bottom:17px;margin-bottom:23px;overflow-x:auto}.tabs .pill{font-size:12px;padding:10px 25px;min-height:40px}.settings-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(270px,1fr);gap:20px}.settings-form .form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.settings-heading{display:flex;align-items:center;gap:15px;margin-bottom:22px}.settings-heading>.icon{width:25px;height:25px;color:#63738d}.settings-heading p{font-size:11px;color:var(--muted);margin-top:4px}.environment-item{display:flex;align-items:center;gap:11px;padding:16px 0;border-bottom:1px solid #edf1f6;font-size:12px}.environment-item:last-child{border:0}.environment-item .icon{color:var(--green);width:18px;height:18px}.environment-item .badge{margin-left:auto}.settings-footer{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-top:20px}.preference-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:21px 0;border-bottom:1px solid #edf1f6}.preference-row:last-child{border:0}.preference-row strong{font-size:13px}.preference-row p{font-size:11px;color:var(--muted);margin-top:7px}
+.empty-state{padding:50px 20px;text-align:center;color:var(--muted);display:flex;align-items:center;flex-direction:column;gap:13px;font-size:12px}.empty-state>.icon{width:34px;height:34px;color:#a6b3c8}.empty-state h3{font-size:14px;color:#6c7b91}.muted{color:var(--muted)}.green-text{color:var(--green)}.amber-text{color:var(--amber)}.red-text{color:var(--red)}.small-text{font-size:11px}.nowrap{white-space:nowrap}.mt{margin-top:20px}.mt-sm{margin-top:12px}.mb{margin-bottom:20px}.separator{height:1px;background:var(--line);border:0;margin:22px 0}
+.page-footer{display:flex;justify-content:space-between;font-size:10px;color:#a1aaba;padding:28px 4px 4px}.mobile-menu{display:none}.mobile-scrim{display:none}
+dialog{padding:0;border:1px solid var(--line);border-radius:32px;width:600px;max-width:calc(100vw - 32px);max-height:calc(100vh - 40px);color:var(--ink);background:#fff;overflow:hidden}
+dialog::backdrop{background:rgba(36,47,67,.25)}dialog.drawer{width:600px;margin:16px 16px 16px auto;max-height:calc(100vh - 32px);height:calc(100vh - 32px);border-radius:32px}
+.dialog-layout{display:flex;flex-direction:column;max-height:calc(100vh - 42px)}.drawer .dialog-layout{height:100%;max-height:100%}.dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:27px 29px 22px;flex:none}.dialog-heading h2{font-size:23px;letter-spacing:-.5px}.dialog-heading p{font-size:12px;color:var(--muted);margin-top:8px}.dialog-body{padding:0 29px 27px;overflow-y:auto;flex:1;min-height:0}.dialog-body.form-stack{gap:22px}.dialog-footer{padding:19px 29px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;gap:10px;flex:none;background:white}.dialog-footer .hint{margin-right:auto}.dialog-layout>form{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}.option-card{display:flex;gap:14px;padding:19px 18px;border:1px solid var(--line);border-radius:24px;align-items:flex-start;cursor:pointer}.option-card:has(input:checked){border-color:#bcd2ff;background:var(--blue-soft)}.option-card input{margin:4px 0 0;width:18px;height:18px;accent-color:var(--blue);flex:none}.option-card strong{font-size:13px}.option-card p{font-size:11px;color:var(--muted);margin-top:7px}.effect-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;font-size:12px}.effect-list li{display:flex;gap:10px;align-items:center}.effect-list .icon{width:15px;height:15px;color:var(--green)}
+.popover{position:fixed;z-index:65;width:222px;max-width:calc(100vw - 32px);padding:8px;border-radius:24px;background:#fff;border:1px solid #dbe3ef}.popover[hidden]{display:none}.menu-item{display:flex;align-items:center;gap:11px;padding:12px 13px;width:100%;border:0;border-radius:16px;background:transparent;text-align:left;font-size:12px;color:#53627b}.menu-item:hover{background:#f3f6fb}.menu-item .icon{width:17px;height:17px}.menu-item.danger{color:var(--red)}.menu-divider{height:1px;background:var(--line);margin:6px 10px}
+.toasts{position:fixed;right:28px;bottom:25px;z-index:110;display:flex;flex-direction:column;gap:8px;max-width:min(410px,calc(100vw - 32px));pointer-events:none}.toast{display:flex;align-items:flex-start;gap:9px;padding:14px 19px;border:1px solid #cfe2d8;background:#f4fcf6;color:#397657;border-radius:20px;font-size:12px;line-height:1.7;animation:enter .2s ease}.toast.amber{background:#fffaf0;border-color:#f1dfbd;color:#986d27}.toast.red{background:#fff5f4;border-color:#f1d0cd;color:#af5351}.toast .icon{width:17px;height:17px;margin-top:1px}.code-preview{padding:20px;max-height:50vh;overflow:auto;background:#f5f7fa;border:1px solid var(--line);border-radius:20px;font-size:12px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;font-family:"SFMono-Regular",Consolas,monospace}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:1600px){.main{padding:35px 42px 20px}.card{padding:27px}.stats-grid{gap:22px}.server-grid{gap:22px}.stat-card{padding:24px;min-height:132px}.table-wrap td{padding-top:20px;padding-bottom:20px}.page-header{min-height:120px}}
+@media(max-width:1220px){.main{padding:26px 22px 16px;margin-left:237px}.sidebar{width:209px;left:14px;top:14px;bottom:14px}.brand{padding-left:12px;gap:10px}.brand strong{font-size:20px}.header-actions{gap:7px}.demo-badge{display:none}.sidebar-demo{display:inline-flex;margin-top:auto}.sidebar-demo+.sidebar-bottom{margin-top:0}.card{padding:20px}.split{grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:16px}.overview-bottom{grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr)}.server-list-item{flex-wrap:wrap;gap:14px}.server-list-item .actions{margin-left:auto}.settings-grid{grid-template-columns:minmax(0,1.5fr) minmax(240px,1fr)}.stat-icon{right:17px}.stat-icon .icon{width:23px}.settings-form .form-grid{grid-template-columns:1fr 1fr}.application-bar{flex-wrap:wrap}.application-bar .checkbox-group{flex-basis:70%}.check-row>.muted{display:none}}
+@media(max-width:1020px){.server-grid{grid-template-columns:1fr}.server-grid>.server-card{display:grid;grid-template-columns:1.1fr 1.3fr auto;gap:22px;align-items:center}.server-grid .server-heading{border-bottom:0;padding:0;margin:0}.server-grid .server-card-footer{margin:0;gap:14px}.server-grid .meta-grid{grid-template-columns:70px 1fr;gap:8px;font-size:11px}.server-grid .server-heading .badge{margin-left:auto}.overview-bottom,.split,.split.diagnostic,.settings-grid{grid-template-columns:1fr}.split>.stack{display:grid;grid-template-columns:1fr 1fr;align-items:start}.split>.stack>.full{grid-column:1/-1}.split>.detail-panel{order:1}.stat-icon{display:none}.stat-value{font-size:26px}.stats-grid{gap:12px}.stat-card{padding:17px;min-height:105px}.stat-label{font-size:11px}.stat-note{font-size:10px}.settings-form .form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.split.equal{grid-template-columns:1fr}.report-footer{flex-wrap:wrap}}
+@media(max-width:760px){.sidebar{transform:translateX(-260px);transition:transform .2s;top:12px;bottom:12px;left:12px;width:224px}.sidebar.is-open{transform:translateX(0)}.mobile-scrim.is-open{display:block;position:fixed;inset:0;background:#19233844;z-index:35}.main{margin:0;padding:20px 16px 12px}.page-header{gap:14px;padding:0 1px 20px;min-height:100px}.header-actions{padding-top:7px;gap:7px}.header-actions .button{padding:9px 13px;font-size:11px}.header-actions .icon-button{width:35px;height:35px}.breadcrumb{margin-bottom:7px;font-size:11px}.mobile-menu{display:inline-flex;width:27px;height:27px;border:0;background:transparent;padding:0;color:#687994}.mobile-menu .icon{width:18px}.subtitle{font-size:11px;max-width:220px}h1{font-size:25px}.stats-grid{grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}.stat-card{padding:18px;min-height:112px}.stat-icon{display:block;top:42px}.stat-label{font-size:11px}.stat-note{font-size:10px}.card{padding:19px;border-radius:27px}.overview-bottom{gap:16px}.section-heading{font-size:15px}.card-header{margin-bottom:17px}.card-header h2{font-size:16px}.server-grid>.server-card{display:block}.server-grid .server-heading{padding-bottom:15px;border-bottom:1px solid var(--line);margin-bottom:16px}.server-grid .server-card-footer{margin-top:17px}.server-grid{gap:13px}.server-grid .meta-grid{grid-template-columns:95px 1fr;font-size:12px}.filters{align-items:stretch;gap:12px}.search{flex-basis:100%;min-width:0}.filters .pills{gap:5px}.pill{padding:7px 12px;font-size:10px}.table-wrap{margin:0 -7px}.table-wrap td{padding:15px 10px}.table-wrap th{padding:11px 10px}.sync-layout{grid-template-columns:1fr;gap:18px}.sync-notes{border-left:0;border-top:1px solid var(--line);padding:16px 0 0}.split>.stack{display:flex}.server-list-item{padding:18px;border-radius:24px}.server-identity{min-width:96px}.server-list-meta{flex-basis:100%;border:0;padding:0}.server-list-item .actions{position:static}.server-list-meta .meta-grid{grid-template-columns:85px 1fr}.field{font-size:12px}.form-grid{gap:16px}.settings-form .form-grid{grid-template-columns:1fr}.settings-footer{flex-wrap:wrap}.settings-footer>.actions{margin-left:auto}.application-bar{align-items:flex-start;gap:16px}.application-bar .checkbox-group{flex-basis:100%}.application-bar .actions{margin-left:auto}.page-notice{border-radius:22px;padding:14px 17px;font-size:11px}.routing-item{gap:14px}.routing-item strong{font-size:12px}.routing-item p{font-size:10px}.routing-item>.icon{width:22px}.routing-item .badge{min-width:79px;font-size:9px}.diagnostic-row{padding:15px 12px}.report-footer .actions{margin-left:auto}.report-footer{gap:13px}.tabs .pill{padding:9px 18px;font-size:11px}.dialog-heading{padding:23px 23px 20px}.dialog-heading h2{font-size:22px}.dialog-body{padding:0 23px 23px}.dialog-footer{padding:17px 23px}.dialog-footer .hint{max-width:45%;font-size:10px}dialog.drawer{margin:9px;width:calc(100vw - 18px);max-width:calc(100vw - 18px);height:calc(100vh - 18px);max-height:calc(100vh - 18px);border-radius:29px}.option-card{padding:17px 15px}.toasts{right:16px;bottom:16px}.page-footer{padding-top:22px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+[hidden]{display:none!important}
+
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳转到主要内容</a>
+  <div id="mobile-scrim" class="mobile-scrim" data-action="close-nav"></div>
+  <aside id="sidebar" class="sidebar" aria-label="主导航"></aside>
+  <main id="main" class="main" tabindex="-1">
+    <header id="page-header" class="page-header"></header>
+    <section id="view" aria-label="当前页面"></section>
+    <footer class="page-footer"><span>Self VPN</span><span>设计原型 · 示例数据</span></footer>
+  </main>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  <div id="popover" class="popover" role="menu" hidden></div>
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+  <script>
+'use strict';
+(() => {
+  const STORAGE_KEY = 'self-vpn-html-prototype-v1';
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const e = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const paths = {
+    shield:'<path d="M12 3 4 6v6c0 5 5 8 8 10 3-2 8-5 8-10V6Z"/>',
+    home:'<path d="m3 10 9-7 9 7v10H6V10"/><path d="M10 20v-7h5v7"/>',
+    server:'<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/>',
+    nodes:'<circle cx="12" cy="4" r="2.5"/><circle cx="4" cy="19" r="2.5"/><circle cx="20" cy="19" r="2.5"/><path d="m11 6-5.5 10.5M13 6l5.5 10.5M7 19h10"/>',
+    link:'<path d="m10 14 4-4M8 16l-1 1a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0M16 8l1-1a4 4 0 1 1 6 6l-5 5a4 4 0 0 1-6 0" transform="translate(1 0) scale(.9)"/>',
+    route:'<circle cx="5" cy="4" r="2"/><circle cx="5" cy="20" r="2"/><circle cx="19" cy="4" r="2"/><path d="M5 6v3c0 4 14 1 14 6v5M5 18v-3c0-5 14-2 14-9"/>',
+    file:'<path d="M14 3H5v18h14V8Z"/><path d="M14 3v6h5M8 13h8M8 17h6"/>',
+    audit:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 11h16M8 15h4M8 18h7"/>',
+    settings:'<path d="m9 3-1 3-3 1-2 4 2 3v4l4 2 3-1 3 1 4-2v-4l2-3-2-4-3-1-1-3Z"/><circle cx="12" cy="12" r="3"/>',
+    refresh:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"/>',
+    plus:'<path d="M12 4v16M4 12h16"/>',
+    search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+    chevron:'<path d="m9 5 7 7-7 7"/>',
+    down:'<path d="m6 9 6 6 6-6"/>',
+    up:'<path d="m6 15 6-6 6 6"/>',
+    arrow:'<path d="M3 12h17m-5-5 5 5-5 5"/>',
+    check:'<path d="m5 12 4 4L19 6"/>',
+    checkCircle:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
+    alert:'<circle cx="12" cy="12" r="9"/><path d="M12 6v7M12 17h.01"/>',
+    more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+    copy:'<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V3H3v13h5"/>',
+    edit:'<path d="m15 4 5 5M4 20l5-1L21 7l-5-5L4 14Z"/>',
+    trash:'<path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/>',
+    close:'<path d="m6 6 12 12M6 18 18 6"/>',
+    download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+    play:'<path d="m7 3 14 9-14 9Z"/>',
+    globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a18 18 0 0 0 0 18 18 18 0 0 0 0-18"/>',
+    monitor:'<rect x="3" y="3" width="18" height="13" rx="2"/><path d="M12 16v5M7 21h10"/>',
+    phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',
+    people:'<circle cx="9" cy="7" r="3"/><path d="M2 21v-3a7 7 0 0 1 14 0v3M17 4a3 3 0 0 1 0 6M18 14a5 5 0 0 1 4 5v2"/>',
+    layers:'<path d="m3 7 9-5 9 5-9 5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
+    folder:'<path d="M3 6h7l2 3h9v12H3ZM3 6V3h7l2 3h9v3"/>',
+    grip:'<path d="M9 4h.01M15 4h.01M9 9h.01M15 9h.01M9 14h.01M15 14h.01M9 19h.01M15 19h.01" stroke-width="3"/>',
+    minus:'<circle cx="12" cy="12" r="9"/><path d="M7 12h10"/>',
+    menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+    save:'<path d="M4 3h13l4 4v14H3V3ZM8 3v6h8V3M7 21v-8h10v8"/>',
+    upload:'<path d="M12 17V4m-5 5 5-5 5 5M4 17v4h16v-4"/>',
+    box:'<path d="m3 7 9-5 9 5v12l-9 4-9-4ZM3 7l9 5 9-5M12 12v11"/>'
+  };
+  const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.box}</svg>`;
+  const badge = (label, color = '', dotted = false) => `<span class="badge ${color}">${dotted ? '<span class="dot"></span>' : ''}${e(label)}</span>`;
+  const button = (label, action, id = '', style = '', glyph = '') => `<button type="button" class="button ${style}" data-action="${action}" data-id="${e(id)}">${glyph ? icon(glyph) : ''}${e(label)}</button>`;
+  const iconButton = (label, action, id = '', glyph = 'more', style = '') => `<button type="button" class="icon-button ${style}" aria-label="${e(label)}" title="${e(label)}" data-action="${action}" data-id="${e(id)}">${icon(glyph)}</button>`;
+  const regions = [{code:'HK',name:'香港'},{code:'SG',name:'新加坡'},{code:'US',name:'美国'}];
+  const regionName = code => regions.find(item => item.code === code)?.name || code;
+  const nav = [
+    ['overview','总览','home'],['servers','服务器管理','server'],['nodes','节点管理','nodes'],['subscriptions','订阅管理','link'],
+    ['routing','分流规则','route'],['diagnostics','诊断日志','file'],['audit','操作日志','audit'],['settings','系统设置','settings']
+  ];
+  const endpoints = [
+    {protocol:'REALITY',label:'VLESS · REALITY',port:443,transport:'TCP'},
+    {protocol:'REALITY',label:'VLESS · REALITY',port:20001,transport:'TCP'},
+    {protocol:'Trojan',label:'Trojan · TLS',port:20002,transport:'TCP'},
+    {protocol:'Hysteria2',label:'Hysteria2',port:20003,transport:'UDP'}
+  ];
+  function seed() {
+    const servers = [
+      {id:'HK-01',name:'香港01',region:'香港',country:'HK',ip:'203.0.113.10',online:false,sshUser:'ubuntu',sshPort:22,keyName:'id_ed25519'},
+      {id:'SG-01',name:'新加坡01',region:'新加坡',country:'SG',ip:'198.51.100.20',online:true,sshUser:'ubuntu',sshPort:22,keyName:'id_ed25519'},
+      {id:'US-01',name:'美国01',region:'美国',country:'US',ip:'192.0.2.30',online:true,sshUser:'ubuntu',sshPort:22,keyName:'id_ed25519'}
+    ];
+    const nodes = servers.flatMap(server => endpoints.map((endpoint,index) => ({...endpoint,id:server.id+'-'+index,serverId:server.id,name:server.region+String(index+1).padStart(2,'0'),enabled:true})));
+    const makeSub = (id,name,enabled,scope,lastPull,kind) => ({
+      id,name,enabled,regions:scope,notes:'',protocols:['REALITY','Trojan','Hysteria2'],strategy:'fallback',lastPull,kind,linkVersion:1,credentialVersion:1,
+      sync:Object.fromEntries(servers.filter(server => scope.includes(server.country)).map(server => [server.id,{pending:false,appliedEnabled:enabled}]))
+    });
+    const subscriptions = [
+      makeSub('sub-phone','我的手机',true,['HK','SG','US'],'14:20','phone'),
+      makeSub('sub-work','工作电脑',false,['HK','SG','US'],'13:50','monitor'),
+      makeSub('sub-family','家人',true,['SG','US'],'14:15','people'),
+      makeSub('sub-backup','备用订阅',false,['HK'],'10:20','layers')
+    ];
+    subscriptions[1].sync['HK-01']={pending:true,appliedEnabled:true};
+    const results = [{serverId:'SG-01',status:'success',label:'已撤销'},{serverId:'US-01',status:'success',label:'已撤销'},{serverId:'HK-01',status:'pending',label:'待同步'}];
+    return {
+      schema:1,servers,nodes,subscriptions,revocations:[],maintenance:[],backups:[],
+      rules:{policy:'fallback',order:['HK','SG','US'],interval:300,timeout:8000,updated:'2026-11-03 14:10',selected:['sub-phone','sub-family']},
+      settings:{listen:'127.0.0.1',port:8765,language:'简体中文',serviceUrl:'https://vpn.example',hostServer:'US-01',interval:300,certificateHours:48,logDays:90,maskLogs:true,localOnly:true},
+      diagnostics:[
+        {id:'DIAG-030',serverId:'HK-01',time:'2026-11-03 14:30',status:'failed'},
+        {id:'DIAG-029',serverId:'SG-01',time:'2026-11-03 14:28',status:'success'},
+        {id:'DIAG-028',serverId:'US-01',time:'2026-11-03 14:26',status:'success'}
+      ],
+      audit:[
+        {id:'TASK-028',time:'2026-11-03 14:32',actor:'本机管理员',module:'订阅管理',action:'停用订阅',object:'工作电脑',status:'partial',summary:'订阅状态：启用 → 停用',results,subId:'sub-work',error:'香港 SSH 连接超时'},
+        {id:'TASK-027',time:'2026-11-03 14:25',actor:'本机管理员',module:'订阅管理',action:'重置链接',object:'我的手机',status:'success',summary:'更换订阅下载地址，节点凭据保留',results:[{serverId:'US-01',status:'success',label:'已更新'}]},
+        {id:'TASK-026',time:'2026-11-03 14:20',actor:'本机管理员',module:'订阅管理',action:'新建订阅',object:'家人',status:'success',summary:'授权地区：新加坡、美国',results:[{serverId:'SG-01',status:'success',label:'已生效'},{serverId:'US-01',status:'success',label:'已生效'}]},
+        {id:'TASK-025',time:'2026-11-03 14:10',actor:'本机管理员',module:'分流规则',action:'更新规则',object:'全部服务器',status:'partial',summary:'更新国内域名及 IP 规则资源',results:[{serverId:'SG-01',status:'success',label:'已更新'},{serverId:'US-01',status:'success',label:'已更新'},{serverId:'HK-01',status:'pending',label:'待同步'}],error:'香港 SSH 连接超时'},
+        {id:'TASK-024',time:'2026-11-03 13:58',actor:'本机管理员',module:'服务器管理',action:'修改服务器',object:'SG-01',status:'success',summary:'保存服务器连接设置',results:[{serverId:'SG-01',status:'success',label:'已保存'}]}
+      ]
+    };
+  }
+  let state;
+  try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); state=validState(saved) ? saved : seed(); } catch { state=seed(); }
+  const ui={page:'overview',filters:{},nodeId:'SG-01-3',subId:'sub-work',diagnosticId:'DIAG-030',auditId:'TASK-028',settingsTab:'general',nodePage:1};
+  const serverById = id => state.servers.find(item => item.id === id);
+  const subById = id => state.subscriptions.find(item => item.id === id);
+  const scopedServers = sub => state.servers.filter(server => sub.regions.includes(server.country));
+  const isNodeOnline = node => node.enabled && !!serverById(node.serverId)?.online;
+  const syncCounts = sub => { const servers=scopedServers(sub); return {total:servers.length,applied:servers.filter(server => sub.sync[server.id] && !sub.sync[server.id].pending).length}; };
+  const isPending = sub => scopedServers(sub).some(server => sub.sync[server.id]?.pending);
+  const statusLabels = {success:'成功',partial:'部分生效',failed:'失败',pending:'待同步'};
+  const statusColor = status => ({success:'green',partial:'amber',failed:'red',pending:'amber'}[status] || '');
+  function validState(data) {
+    return !!data && data.schema===1 && ['servers','nodes','subscriptions','audit','diagnostics','maintenance','revocations','backups'].every(key=>Array.isArray(data[key])) && data.rules && data.settings &&
+      data.servers.every(server=>typeof server.id==='string' && typeof server.online==='boolean') &&
+      data.subscriptions.every(sub=>typeof sub.id==='string' && Array.isArray(sub.regions) && Array.isArray(sub.protocols) && sub.sync && typeof sub.sync==='object');
+  }
+  function persist() {
+    try {localStorage.setItem(STORAGE_KEY,JSON.stringify(state));} catch {toast('当前浏览器无法保存，仍可继续体验本次原型。','amber');}
+  }
+  function stamp() {
+    const parts=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+    const get=type=>parts.find(part=>part.type===type)?.value || '00';
+    return get('year')+'-'+get('month')+'-'+get('day')+' '+get('hour')+':'+get('minute');
+  }
+  function uid(prefix) {return prefix+'-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,6);}
+  function record(module,action,object,summary,results=[],extra={}) {
+    const status=extra.status || (results.some(result=>result.status==='pending') ? 'partial' : results.some(result=>result.status==='failed') ? 'failed' : 'success');
+    const item={id:'TASK-'+String(state.audit.length+29).padStart(3,'0'),time:stamp(),actor:'本机管理员',module,action,object,summary,results,status,...extra};
+    state.audit.unshift(item); state.audit=state.audit.slice(0,250); ui.auditId=item.id; return item;
+  }
+  function applySync(sub) {
+    const previous=sub.sync || {}; const sync={};
+    for(const server of scopedServers(sub)){
+      sync[server.id]=server.online ? {pending:false,appliedEnabled:sub.enabled} : {...(previous[server.id] || {appliedEnabled:false}),pending:true};
+    }
+    sub.sync=sync;
+    return scopedServers(sub).map(server=>({serverId:server.id,status:sync[server.id].pending?'pending':'success',label:sync[server.id].pending?'待同步':sub.enabled?'已生效':'已撤销'}));
+  }
+  function pendingTasks() {
+    return [
+      ...state.subscriptions.filter(isPending).map(sub=>({id:'sub:'+sub.id,name:sub.name,label:sub.enabled?'授权同步':'停用权限同步',serverIds:scopedServers(sub).filter(server=>sub.sync[server.id]?.pending).map(server=>server.id)})),
+      ...state.revocations.map(item=>({id:'revoke:'+item.id,name:item.name,label:'已删除订阅 · 撤销权限',serverIds:item.serverIds})),
+      ...state.maintenance.map(item=>({id:'maintenance:'+item.id,name:item.name,label:item.label,serverIds:item.serverIds}))
+    ].filter(item=>item.serverIds.length);
+  }
+  function toast(message,color='green') {
+    const node=document.createElement('div');node.className='toast '+color;node.setAttribute('role','status');
+    node.innerHTML=icon(color==='green'?'checkCircle':'info')+'<span>'+e(message)+'</span>';$('#toasts').append(node);
+    setTimeout(()=>node.remove(),4300);
+  }
+  function resultBadge(status) {return badge(statusLabels[status] || status,statusColor(status),true);}
+  function scopeTags(sub) {return '<span class="scope-tags">'+sub.regions.map(code=>'<span class="scope-tag">'+e(regionName(code))+'</span>').join('')+'</span>';}
+  function syncLabel(sub) {
+    const count=syncCounts(sub);const pending=scopedServers(sub).filter(server=>sub.sync[server.id]?.pending);
+    return pending.length ? badge(count.applied+'/'+count.total+' · '+pending.map(server=>server.region).join('、')+'待同步','amber') :
+      '<span class="small-text green-text">'+icon('checkCircle')+' '+count.applied+'/'+count.total+' 已生效</span>';
+  }
+  function subscriptionSwitch(sub) {
+    return `<span class="switch-label"><button type="button" role="switch" aria-checked="${sub.enabled}" aria-label="${e((sub.enabled?'停用':'启用')+sub.name)}" class="switch ${sub.enabled?'on':''}" data-action="toggle-sub" data-id="${e(sub.id)}"></button><span class="${sub.enabled?'green-text':'muted'}">${sub.enabled?'启用':'停用'}</span></span>`;
+  }
+  function filterValue(key,fallback='') {return ui.filters[ui.page]?.[key] ?? fallback;}
+  function filterInput(key,placeholder) {
+    return `<label class="search">${icon('search')}<input type="search" data-filter="${key}" aria-label="${e(placeholder)}" placeholder="${e(placeholder)}" value="${e(filterValue(key))}"></label>`;
+  }
+  function filterPills(key,values) {
+    return '<div class="pills">'+values.map(([value,label,count])=>`<button type="button" class="pill ${filterValue(key,'all')===value?'active':''}" data-action="filter" data-key="${key}" data-id="${value}" aria-pressed="${filterValue(key,'all')===value}">${e(label)}${count===undefined?'':'<small>'+e(count)+'</small>'}</button>`).join('')+'</div>';
+  }
+  function emptyState(title='没有匹配的结果',text='试试调整筛选条件。') {return '<div class="empty-state">'+icon('search')+'<h3>'+e(title)+'</h3><p>'+e(text)+'</p></div>';}
+  function taskHTML(task) {
+    const names=task.serverIds.map(id=>serverById(id)?.region || id).join('、');
+    return `<div class="pending-task"><div class="row">${icon('clock')}<div><strong>${e(task.name)}</strong><p class="secondary">${e(task.label)}</p></div></div><div class="row">${badge(names+'待同步','amber')}${button('查看任务','task-detail',task.id,'text')}</div></div>`;
+  }
+  function taskListHTML() {const tasks=pendingTasks();return tasks.length?'<div class="stack gap-sm">'+tasks.map(taskHTML).join('')+'</div>':'<div class="notice green">'+icon('checkCircle')+'所有变更均已同步。</div>';}
+  function setNavigation(open) {
+    $('#sidebar').classList.toggle('is-open',open);
+    $('#mobile-scrim').classList.toggle('is-open',open);
+    const toggle=$('[data-action="open-nav"]');
+    if(toggle)toggle.setAttribute('aria-expanded',String(open));
+  }
+  function renderSidebar() {
+    $('#sidebar').innerHTML=`<a class="brand" href="#overview" aria-label="Self VPN 总览">${icon('shield')}<div><strong>Self VPN</strong><small>个人代理管理</small></div></a><nav class="nav-list">${nav.map(([id,label,glyph])=>`<a class="nav-link ${id===ui.page?'active':''}" href="#${id}" ${id===ui.page?'aria-current="page"':''}>${icon(glyph)}<span>${label}</span>${id==='subscriptions'&&pendingTasks().length?'<span class="nav-badge">'+pendingTasks().length+'</span>':''}</a>`).join('')}</nav><button type="button" class="demo-badge sidebar-demo" data-action="demo-menu">${icon('layers')}示例场景</button><div class="sidebar-bottom"><span class="dot"></span>本机管理<span class="badge" style="margin-left:auto">原型</span></div>`;
+  }
+  function renderHeader() {
+    const meta={
+      overview:['多地区总览',state.servers.length+' 台独立服务器 · 按地区统一维护','添加服务器','add-server','plus'],
+      servers:['服务器管理','独立部署、独立出口、统一维护','添加服务器','add-server','plus'],
+      nodes:['节点管理','按服务器与协议查看节点','新增节点','add-node','plus'],
+      subscriptions:['订阅管理','每条订阅独立授权，互不影响','新建订阅','new-sub','plus'],
+      routing:['分流规则','默认策略模板 · 可应用到所选订阅','更新规则','update-rules','refresh'],
+      diagnostics:['诊断日志','连通性、证书与部署状态检查','运行诊断','run-diagnostics','play'],
+      audit:['操作日志','记录管理操作、执行结果与变更摘要','导出日志','export-audit','download'],
+      settings:['系统设置','本机面板、订阅服务与维护参数',ui.settingsTab==='backups'?'创建备份':'保存设置',ui.settingsTab==='backups'?'create-backup':'save-settings','save']
+    }[ui.page];
+    const label=nav.find(item=>item[0]===ui.page)?.[1] || '总览';
+    $('#page-header').innerHTML=`<div><div class="breadcrumb"><button type="button" class="mobile-menu" data-action="open-nav" aria-controls="sidebar" aria-expanded="${$('#sidebar').classList.contains('is-open')}" aria-label="展开导航">${icon('menu')}</button><span>工作台</span><span>/</span><span>${label}</span></div><h1>${meta[0]}</h1><p class="subtitle">${e(meta[1])}</p></div><div class="header-actions"><button type="button" class="demo-badge" data-action="demo-menu">设计原型 · 示例数据</button>${ui.page==='diagnostics'?button('导出报告','export-diagnostics','','','download'):''}${ui.page!=='audit'&&ui.page!=='settings'?iconButton('刷新当前页面','refresh','','refresh'):''}${button(meta[2],meta[3],'','primary',meta[4])}</div>`;
+  }
+  function render() {
+    const active=document.activeElement;
+    const focusKey=active?.dataset?.filter;const selection=focusKey?[active.selectionStart,active.selectionEnd]:null;
+    renderSidebar();renderHeader();
+    const screens={overview:renderOverview,servers:renderServers,nodes:renderNodes,subscriptions:renderSubscriptions,routing:renderRouting,diagnostics:renderDiagnostics,audit:renderAudit,settings:renderSettings};
+    $('#view').innerHTML=screens[ui.page]();
+    if(focusKey){const input=$('[data-filter="'+focusKey+'"]');if(input){input.focus();if(input.type==='search'&&selection)input.setSelectionRange(selection[0],selection[1]);}}
+  }
+  function statsHTML(items) {
+    return '<div class="grid stats-grid">'+items.map(item=>`<article class="card stat-card"><div class="stat-label">${item[0]}</div><div class="stat-value">${e(item[1])}</div><div class="stat-note ${item[4]||''}">${e(item[2])}</div><div class="stat-icon">${icon(item[3])}</div></article>`).join('')+'</div>';
+  }
+  function serverCard(server) {
+    const nodes=state.nodes.filter(node=>node.serverId===server.id);const available=nodes.filter(isNodeOnline).length;
+    return `<article class="card server-card"><div class="between server-heading"><div class="row">${icon('server')}<div><h3>${e(server.region)}</h3><div class="secondary">${e(server.id)}</div></div></div>${badge(server.online?'在线':'离线',server.online?'green':'amber',true)}</div><dl class="meta-grid"><dt>服务器 IP</dt><dd>${e(server.ip)}</dd><dt>节点可用</dt><dd>${available} / ${nodes.length}</dd><dt>状态说明</dt><dd class="${server.online?'':'amber-text'}">${server.online?'运行正常':'连接超时'}</dd></dl><div class="server-card-footer"><span class="hint">${e(server.country)} · 独立出口</span>${button(server.online?'管理':'诊断',server.online?'manage-server':'diagnose-server',server.id,server.online?'primary small':'outline-amber small')}</div></article>`;
+  }
+  function renderOverview() {
+    const online=state.servers.filter(server=>server.online).length;const enabled=state.subscriptions.filter(sub=>sub.enabled).length;const tasks=pendingTasks();
+    const offline=state.servers.filter(server=>!server.online).map(server=>server.region).join('、');
+    return statsHTML([
+      ['在线服务器',online+' / '+state.servers.length,offline?offline+'连接超时':'所有服务器在线','server',offline?'amber':''],
+      ['可用节点',state.nodes.filter(isNodeOnline).length+' / '+state.nodes.length,'各地区节点独立运行','nodes'],
+      ['订阅总数',state.subscriptions.length,'启用 '+enabled+' · 停用 '+(state.subscriptions.length-enabled),'link'],
+      ['待同步任务',tasks.length,tasks[0]?tasks[0].name+' · '+tasks[0].serverIds.map(id=>serverById(id)?.region).join('、'):'所有变更已生效','refresh',tasks.length?'amber':'']
+    ])+`<h2 class="section-heading"><span>地区服务器</span><span class="hint">独立部署 · 统一维护</span></h2><div class="grid server-grid">${state.servers.map(serverCard).join('')}</div><div class="overview-bottom"><section class="card"><div class="card-header"><h2>订阅概览</h2><a href="#subscriptions" class="button text">查看全部 ${icon('chevron')}</a></div><div class="table-wrap"><table><thead><tr><th>订阅名称</th><th>授权地区</th><th>状态</th><th>同步情况</th><th></th></tr></thead><tbody>${state.subscriptions.slice(0,5).map(sub=>`<tr><td><span class="name">${icon(sub.kind||'link')}${e(sub.name)}</span></td><td>${scopeTags(sub)}</td><td>${badge(sub.enabled?'启用':'停用',sub.enabled?'green':'',true)}</td><td>${syncLabel(sub)}</td><td>${iconButton('管理'+sub.name,'select-sub',sub.id,'more')}</td></tr>`).join('')}</tbody></table>${state.subscriptions.length?'':emptyState('还没有订阅','新建一条独立订阅开始体验。')}</div></section><div class="stack"><section class="card compact"><div class="between"><h3>客户端故障切换</h3>${badge('已启用','blue')}</div><div class="region-chain">${state.rules.order.map((code,index)=>`${index?icon('arrow'):''}${badge(regionName(code),state.servers.some(server=>server.country===code&&server.online)?'green':'amber',true)}`).join('')}</div><p class="hint">客户端按顺序尝试可用节点，地区之间独立运行。</p></section><section class="card compact"><div class="card-header"><h3>最近操作</h3><a href="#audit" class="hint">全部日志</a></div><div class="activity-list">${state.audit.slice(0,3).map(item=>`<div class="activity-item">${icon(item.status==='success'?'checkCircle':'clock')}<div>${e(item.action+' '+item.object)}<div class="muted" style="font-size:10px;margin-top:4px">${statusLabels[item.status]}</div></div><time>${e(item.time.slice(11))}</time></div>`).join('')}</div></section></div></div>`;
+  }
+  function renderServers() {
+    const country=filterValue('country','all');
+    const visible=state.servers.filter(server=>country==='all'||server.country===country);
+    return `<div class="split"><div class="stack"><section class="card full"><div class="card-header"><h2>服务器列表</h2><span class="hint">${state.servers.length} 台服务器</span></div><div class="filters">${filterPills('country',[['all','全部',state.servers.length],...regions.map(region=>[region.code,region.name,state.servers.filter(server=>server.country===region.code).length])])}</div><div class="server-list">${visible.map(server=>{const nodes=state.nodes.filter(node=>node.serverId===server.id);return `<article class="server-list-item">${icon('server')}<div class="server-identity"><h3>${e(server.region)}</h3><div class="secondary">${e(server.id)}</div><div class="mt-sm">${badge(server.online?'在线':'离线',server.online?'green':'amber',true)}</div></div><div class="server-list-meta"><dl class="meta-grid"><dt>服务器 IP</dt><dd>${e(server.ip)}</dd><dt>可用节点</dt><dd>${nodes.filter(isNodeOnline).length} / ${nodes.length} 可用</dd><dt>状态说明</dt><dd>${server.online?'最近验收通过':'连接超时'}</dd></dl></div><div class="actions">${button(server.online?'验收':'诊断','diagnose-server',server.id,server.online?'primary small':'outline-amber small')}${button('编辑','edit-server',server.id,'small')}${iconButton('更多服务器操作','server-menu',server.id,'more','small')}</div></article>`;}).join('') || emptyState()}</div></section><section class="card full"><div class="card-header"><h2>维护任务</h2>${badge(pendingTasks().length+' 项待同步',pendingTasks().length?'amber':'green')}</div>${taskListHTML()}</section></div><section class="card"><div class="settings-heading">${icon('plus')}<div><h2>添加服务器</h2><p>新增地区或扩展现有地区</p></div></div>${serverFormHTML(null,false)}</section></div>`;
+  }
+  function renderNodes() {
+    const country=filterValue('country','all'),protocol=filterValue('protocol','all'),query=filterValue('query').trim().toLowerCase();
+    const filtered=state.nodes.filter(node=>{const server=serverById(node.serverId);return (country==='all'||server?.country===country)&&(protocol==='all'||node.protocol===protocol)&&(!query||(node.name+' '+node.serverId+' '+node.label).toLowerCase().includes(query));});
+    const pageCount=Math.max(1,Math.ceil(filtered.length/6));ui.nodePage=Math.min(ui.nodePage,pageCount);
+    const rows=filtered.slice((ui.nodePage-1)*6,ui.nodePage*6);
+    const node=state.nodes.find(item=>item.id===ui.nodeId)||rows[0]||state.nodes[0];const server=node?serverById(node.serverId):null;
+    const related=server?state.subscriptions.filter(sub=>sub.regions.includes(server.country)):[];
+    return `<div class="split"><section class="card"><div class="filters">${filterPills('country',[['all','全部',state.nodes.length],...regions.map(region=>[region.code,region.name,state.nodes.filter(item=>serverById(item.serverId)?.country===region.code).length])])}<select data-filter="protocol" aria-label="协议筛选">${['all','REALITY','Trojan','Hysteria2'].map(value=>'<option value="'+value+'" '+(protocol===value?'selected':'')+'>'+(value==='all'?'全部协议':value)+'</option>').join('')}</select></div><div class="filters">${filterInput('query','搜索节点')}</div><h3 class="mb">节点列表</h3><div class="table-wrap"><table><thead><tr><th>节点名称</th><th>服务器</th><th>协议</th><th>端口</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows.map(item=>`<tr class="${node?.id===item.id?'selected':''}"><td><strong>${e(item.name)}</strong></td><td class="muted">${e(item.serverId)}</td><td>${e(item.label)}</td><td>${item.port} / ${item.transport}</td><td>${badge(isNodeOnline(item)?'正常':item.enabled?'离线':'停用',isNodeOnline(item)?'green':'amber',true)}</td><td>${button('详情','select-node',item.id,'text')}</td></tr>`).join('')}</tbody></table>${rows.length?'':emptyState()}</div><div class="table-footer"><span>显示 ${rows.length} / ${filtered.length} 个节点</span><div class="pagination">${Array.from({length:pageCount},(_,index)=>`<button type="button" class="page-number ${ui.nodePage===index+1?'active':''}" data-action="node-page" data-id="${index+1}" aria-label="第${index+1}页">${index+1}</button>`).join('')}</div></div></section><section class="card detail-panel">${node?`<div class="detail-heading"><div class="row">${icon('nodes')}<h2>${e(node.name)}</h2></div>${badge(isNodeOnline(node)?'正常':'离线',isNodeOnline(node)?'green':'amber',true)}</div><dl class="detail-list"><div><dt>所属服务器</dt><dd>${e(node.serverId)}</dd></div><div><dt>地区</dt><dd>${e(server?.region)}</dd></div><div><dt>协议</dt><dd>${e(node.label)}</dd></div><div><dt>端口</dt><dd>${node.port} / ${node.transport}</dd></div><div><dt>最近验收</dt><dd>${badge(isNodeOnline(node)?'14:28 · 通过':'等待连接',isNodeOnline(node)?'green':'amber')}</dd></div></dl><div class="notice mt">${icon('info')}访问凭据由每条订阅独立管理</div><div class="detail-section"><h3>关联订阅</h3>${related.map(sub=>`<div class="mini-result">${icon(sub.kind||'link')}<span>${e(sub.name)}</span>${badge(sub.enabled?'启用':'停用',sub.enabled?'green':'',true)}</div>`).join('')||'<p class="hint">暂无关联订阅</p>'}</div><div class="form-footer">${button('运行验收','diagnose-server',node.serverId,'primary','play')}${button('编辑配置','edit-node',node.id,'','edit')}</div>` : emptyState('还没有节点','添加服务器后可以部署节点。')}</section></div>`;
+  }
+  function renderSubscriptions() {
+    const status=filterValue('status','all'),query=filterValue('query').trim().toLowerCase();
+    const list=state.subscriptions.filter(sub=>(status==='all'||status==='enabled'&&sub.enabled||status==='disabled'&&!sub.enabled||status==='pending'&&isPending(sub))&&(!query||(sub.name+' '+sub.notes).toLowerCase().includes(query)));
+    const selected=subById(ui.subId)||state.subscriptions.find(isPending)||state.subscriptions[0];if(selected)ui.subId=selected.id;
+    const enabled=state.subscriptions.filter(sub=>sub.enabled).length;
+    return statsHTML([['订阅总数',state.subscriptions.length,'独立链接与访问凭据','layers'],['启用',enabled,'订阅可正常使用','checkCircle'],['停用',state.subscriptions.length-enabled,'单独撤销对应权限','minus'],['待同步',state.subscriptions.filter(isPending).length,'按服务器显示生效进度','refresh']])+`<section class="card"><div class="filters">${filterPills('status',[['all','全部'],['enabled','启用'],['disabled','停用'],['pending','待同步']])}${filterInput('query','搜索订阅')}</div><div class="table-wrap"><table><thead><tr><th>名称</th><th>授权地区</th><th>状态</th><th>同步情况</th><th>最近拉取</th><th>操作</th></tr></thead><tbody>${list.map(sub=>`<tr class="${selected?.id===sub.id?'selected':''}"><td>${button(sub.name,'select-sub',sub.id,'text')}</td><td>${scopeTags(sub)}</td><td>${subscriptionSwitch(sub)}</td><td>${syncLabel(sub)}</td><td class="muted">${e(sub.lastPull||'尚未拉取')}</td><td><div class="actions">${iconButton('复制'+sub.name+'的订阅链接','copy-sub',sub.id,'copy')}${iconButton('查看'+sub.name+'的链接详情','sub-link',sub.id,'link')}${iconButton('更多操作：'+sub.name,'sub-menu',sub.id,'more')}</div></td></tr>`).join('')}</tbody></table>${list.length?'':emptyState('没有匹配的订阅','可以调整筛选条件，或创建新的订阅。')}</div></section>${selected?`<section class="card mt"><div class="card-header"><div class="row"><h2>同步详情 · ${e(selected.name)}</h2>${badge(selected.enabled?'已启用':'已停用',selected.enabled?'green':'')}</div>${isPending(selected)?button('重试同步','retry-sub',selected.id,'small','refresh'):badge('全部已生效','green')}</div><div class="sync-layout"><div>${scopedServers(selected).map(server=>`<div class="mini-result">${icon('server')}<span>${e(server.region)}（${e(server.id)}）</span>${badge(selected.sync[server.id]?.pending?'待同步':'已生效',selected.sync[server.id]?.pending?'amber':'green',true)}</div>`).join('')}</div><div class="sync-notes"><p class="hint hint-icon">${icon('info')}<span><strong>重置链接：</strong>更换下载地址，节点凭据保留。</span></p><p class="hint hint-icon">${icon('info')}<span><strong>重置全部凭据：</strong>客户端需要重新导入。</span></p></div></div>${isPending(selected)?'<p class="hint amber mt-sm">离线服务器同步完成前，旧凭据可能仍有效。</p>':''}</section>`:''}`;
+  }
+  function renderRouting() {
+    const offline=state.servers.filter(server=>!server.online).map(server=>server.region).join('、');
+    return `${offline?'<div class="notice amber page-notice">'+icon('alert')+e(offline)+'暂不可达，服务器规则更新需待同步</div>':''}<div class="split"><div class="stack"><section class="card full"><h2>路由策略</h2>${[['monitor','局域网与保留地址','内网、环回、链路本地等保留地址','DIRECT'],['globe','国内域名与 IP','中国大陆常用域名与 IP 段','DIRECT'],['nodes','其他流量','不匹配以上规则的其他流量',({manual:'手动选择',fallback:'地区自动回退',latency:'延迟优选'})[state.rules.policy]],['server','节点服务器地址','各台服务器的管理与服务地址','DIRECT']].map(item=>`<div class="routing-item">${icon(item[0])}<div><strong>${item[1]}</strong><p>${item[2]}</p></div>${badge(item[3])}</div>`).join('')}</section><section class="card full"><h2 class="mb">规则资源</h2>${[['国内域名','cn-domain.mrs'],['国内 IP','cn-ip.mrs']].map(item=>`<div class="resource-item">${icon('file')}<strong>${item[0]}</strong>${badge(item[1])}${badge('校验通过','green',true)}<time>最近更新：${e(state.rules.updated)}</time>${iconButton('更新'+item[0],'update-rules','','refresh','small borderless')}</div>`).join('')}</section></div><div class="stack"><section class="card"><h2 class="mb">客户端策略</h2><div class="pills">${[['manual','手动选择'],['fallback','故障回退'],['latency','延迟优选']].map(([id,label])=>`<button type="button" class="pill ${state.rules.policy===id?'active':''}" data-action="rule-policy" data-id="${id}" aria-pressed="${state.rules.policy===id}">${label}</button>`).join('')}</div><p class="hint mt">${state.rules.policy==='fallback'?'回退顺序（优先使用第一个可用节点）':state.rules.policy==='latency'?'客户端定期选择延迟较低的可用节点':'客户端中手动选择节点'}</p><div class="order-list">${state.rules.order.map((code,index)=>`<div class="order-item">${icon('grip')}<strong>${regionName(code)}</strong><div class="actions"><button type="button" class="icon-button" data-action="move-region" data-id="${code}" data-direction="-1" aria-label="上移${regionName(code)}" ${index===0?'disabled':''}>${icon('up')}</button><button type="button" class="icon-button" data-action="move-region" data-id="${code}" data-direction="1" aria-label="下移${regionName(code)}" ${index===state.rules.order.length-1?'disabled':''}>${icon('down')}</button></div></div>`).join('')}</div><div class="inline-fields"><label class="field"><span>检查间隔（秒）</span><input type="number" min="10" max="86400" data-rule="interval" aria-label="检查间隔" value="${state.rules.interval}"></label><label class="field"><span>超时（毫秒）</span><input type="number" min="500" max="60000" step="500" data-rule="timeout" aria-label="超时时间" value="${state.rules.timeout}"></label></div><p class="hint hint-icon mt">${icon('info')}由客户端检测可用性并切换</p></section><section class="card"><h2 class="mb">DNS 策略</h2><div class="routing-item">${icon('shield')}<div><strong>国内域名</strong><p>国内 DNS</p></div></div><div class="routing-item">${icon('layers')}<div><strong>其他域名</strong><p>代理 DoH</p></div></div></section></div></div><section class="card application-bar"><h3>应用范围</h3><div class="checkbox-group">${state.subscriptions.map(sub=>`<label class="checkbox"><input type="checkbox" data-rule-sub="${e(sub.id)}" ${state.rules.selected.includes(sub.id)?'checked':''}>${e(sub.name)}</label>`).join('')}</div><div class="actions">${button('预览配置','preview-config')}${button('保存并生成订阅','save-rules','','primary')}</div></section>`;
+  }
+  function renderDiagnostics() {
+    const serverId=filterValue('server','all'),status=filterValue('status','all');
+    const reports=state.diagnostics.filter(report=>(serverId==='all'||report.serverId===serverId)&&(status==='all'||report.status===status));
+    const report=reports.find(item=>item.id===ui.diagnosticId)||reports[0];
+    const server=report?serverById(report.serverId):null;const failed=report?.status==='failed';
+    return `<div class="card filters"><div class="row"><span class="hint">服务器</span><select data-filter="server" aria-label="诊断服务器筛选"><option value="all">全部服务器</option>${state.servers.map(server=>`<option value="${e(server.id)}" ${serverId===server.id?'selected':''}>${e(server.region)} · ${e(server.id)}</option>`).join('')}</select></div>${filterPills('status',[['all','全部'],['success','通过'],['failed','失败']])}<span class="hint">2026-11-03 · 上海时区</span></div><div class="split diagnostic"><section class="card"><div class="card-header"><h2>诊断报告列表</h2>${badge(reports.length+' 份')}</div>${reports.map(item=>{const srv=serverById(item.serverId);return `<button type="button" class="diagnostic-row ${report?.id===item.id?'selected':''}" data-action="select-diagnostic" data-id="${e(item.id)}">${icon('server')}<div><strong>${e(srv?.region||item.serverId)} ${e(item.serverId)}</strong><p>${item.status==='failed'?'SSH 连接超时':'各项检查通过'}</p></div><time>${e(item.time.slice(11))}</time>${badge(item.status==='failed'?'失败':'通过',item.status==='failed'?'amber':'green',true)}</button>`;}).join('')||emptyState('没有匹配的报告','运行一次诊断，或调整筛选条件。')}</section><section class="card">${report?`<div class="card-header"><div><h2>${e(server?.region||report.serverId)} · 诊断报告</h2><p class="hint mt-sm">服务器：${e(report.serverId)}　|　公网 IP：${e(server?.ip||'—')}　|　${e(report.time)}</p></div>${badge(failed?'失败':'通过',failed?'amber':'green',true)}</div><div class="notice ${failed?'amber':'green'}">${icon(failed?'alert':'checkCircle')}${failed?'无法连接服务器，后续检查未执行':'连接、服务、节点与订阅检查均已通过'}</div><h3 class="mt">诊断检查项</h3><div class="check-list">${[['SSH 连接','检查基础连通性'],['服务状态','检查 Xray 与 Hysteria2 服务'],['节点公网验收','检查节点协议与出口'],['订阅与证书','检查订阅与证书有效期']].map((item,index)=>`<div class="check-row"><span class="step-number">${index+1}</span><strong>${item[0]}</strong><span class="muted">${item[1]}</span>${badge(failed?(index===0?'超时':'未执行'):'通过',failed?(index===0?'amber':''):'green',true)}</div>`).join('')}</div><h3 class="mt">执行输出</h3><pre class="log-output">${e('['+report.time.slice(11)+':00] 开始连接 '+report.serverId+'\n['+report.time.slice(11)+':12] '+(failed?'SSH 连接超时':'SSH 连接成功，服务检查通过')+'\n['+report.time.slice(11)+':12] '+(failed?'本次诊断失败':'节点、订阅与证书检查通过'))}</pre><div class="report-footer"><span class="hint">${e(report.id)} · 诊断不修改服务器配置</span><div class="actions">${button('再次诊断','diagnose-server',report.serverId,'primary','refresh')}${button('查看服务器','manage-server',report.serverId,'','server')}</div></div>` : emptyState('选择一份诊断报告')}</section></div>`;
+  }
+  function renderAudit() {
+    const module=filterValue('module','all'),status=filterValue('status','all'),query=filterValue('query').trim().toLowerCase(),date=filterValue('date');
+    const list=state.audit.filter(item=>(module==='all'||item.module===module)&&(status==='all'||item.status===status)&&(!date||item.time.startsWith(date))&&(!query||(item.object+' '+item.action+' '+item.id).toLowerCase().includes(query)));
+    const item=list.find(row=>row.id===ui.auditId)||list[0];
+    return `<div class="split"><section class="card"><div class="filters"><input type="date" data-filter="date" value="${e(date)}" aria-label="操作日期"><select data-filter="module" aria-label="操作模块"><option value="all">全部模块</option>${nav.slice(1).map(([,label])=>'<option '+(module===label?'selected':'')+'>'+label+'</option>').join('')}</select><select data-filter="status" aria-label="操作结果">${[['all','全部结果'],['success','成功'],['partial','部分生效'],['failed','失败']].map(([value,label])=>'<option value="'+value+'" '+(status===value?'selected':'')+'>'+label+'</option>').join('')}</select></div><div class="filters">${filterInput('query','搜索对象或任务')}</div><div class="table-wrap"><table><thead><tr><th>时间</th><th>操作者</th><th>操作</th><th>对象</th><th>结果</th><th></th></tr></thead><tbody>${list.slice(0,30).map(row=>`<tr class="${item?.id===row.id?'selected':''}"><td>${e(row.time.slice(11))}</td><td class="muted">${e(row.actor)}</td><td>${e(row.action)}</td><td>${e(row.object)}</td><td>${resultBadge(row.status)}</td><td>${button('详情','select-audit',row.id,'text')}</td></tr>`).join('')}</tbody></table>${list.length?'':emptyState()}</div><div class="table-footer">共 ${list.length} 条记录 · 最近的记录优先展示</div></section><section class="card">${item?`<div class="card-header"><h2>操作详情</h2>${resultBadge(item.status)}</div><dl class="detail-list"><div><dt>任务</dt><dd>${e(item.id)}</dd></div><div><dt>对象</dt><dd>${e(item.object)}</dd></div><div><dt>操作者</dt><dd>${e(item.actor)}</dd></div><div><dt>时间</dt><dd>${e(item.time)}</dd></div></dl><div class="change-summary"><span class="muted">变更摘要</span>${e(item.summary)}</div><h3>服务器执行结果</h3><div class="mt-sm">${item.results.length?item.results.map(result=>`<div class="mini-result">${icon('server')}<span>${e(result.serverId)}</span>${badge(result.label,statusColor(result.status),true)}</div>`).join(''):'<p class="hint">本机操作已完成</p>'}</div>${item.error?'<div class="detail-section"><h3>错误原因</h3><div class="notice">'+e(item.error)+'</div></div>':''}<div class="form-footer">${button('查看任务','audit-task',item.id)}${item.status==='partial'?button('重试同步','retry-audit',item.id,'primary'):''}</div><p class="hint hint-icon mt">${icon('info')}敏感凭据已脱敏 · 删除订阅后保留记录</p>`:emptyState('选择一条操作记录')}</section></div>`;
+  }
+  function renderSettings() {
+    const tabs=[['general','常规设置'],['security','安全设置'],['backups','备份恢复']];
+    const formId=ui.settingsTab==='security'?'security-settings':'general-settings';
+    const tabsHTML='<div class="tabs" role="tablist" aria-label="设置分类">'+tabs.map(([id,label])=>`<button type="button" role="tab" class="pill ${ui.settingsTab===id?'active':''}" aria-selected="${ui.settingsTab===id}" data-action="settings-tab" data-id="${id}">${label}</button>`).join('')+'</div>';
+    if(ui.settingsTab==='backups')return tabsHTML+`<div class="split equal"><section class="card"><div class="settings-heading">${icon('layers')}<div><h2>本机备份</h2><p>保存当前原型的服务器、订阅与设置</p></div></div><div class="actions mb">${button('创建备份','create-backup','','primary','plus')}${button('导出全部数据','export-backup','','','download')}<label class="button">${icon('upload')}导入备份<input id="backup-import" type="file" accept=".json,application/json" hidden></label></div>${state.backups.length?state.backups.map(item=>`<div class="pending-task"><div><strong>${e(item.name)}</strong><p class="secondary">${e(item.time)} · ${item.data.subscriptions.length} 条订阅</p></div>${button('恢复','restore-backup',item.id,'small')}</div>`).join(''):emptyState('还没有本机备份','创建一份备份，随时恢复当前示例状态。')}</section><section class="card"><h2 class="mb">恢复初始示例</h2><p class="hint">恢复香港离线、新加坡和美国在线的默认场景。当前示例可先导出备份。</p><div class="form-footer">${button('恢复初始示例','reset-demo','','outline-danger','refresh')}</div></section></div>`;
+    if(ui.settingsTab==='security')return tabsHTML+`<form id="${formId}" data-form="security-settings"><section class="card"><div class="settings-heading">${icon('shield')}<div><h2>访问与日志</h2><p>本机管理与敏感信息显示偏好</p></div></div><div class="preference-row"><div><strong>仅本机访问</strong><p>使用回环地址管理面板</p></div><label aria-label="仅本机访问"><input class="switch-input" type="checkbox" name="localOnly" ${state.settings.localOnly?'checked':''}></label></div><div class="preference-row"><div><strong>日志隐藏敏感凭据</strong><p>下载链接令牌、UUID、密码和私钥保持脱敏</p></div><label aria-label="日志隐藏敏感凭据"><input class="switch-input" type="checkbox" name="maskLogs" ${state.settings.maskLogs?'checked':''}></label></div><div class="preference-row"><div><strong>订阅独立授权</strong><p>启停与重置单独作用于对应订阅</p></div>${badge('已启用','green',true)}</div><div class="form-footer">${button('取消修改','refresh')}`+'<button type="submit" class="button primary">'+icon('save')+'保存设置</button></div></section></form>';
+    const s=state.settings;
+    return tabsHTML+`<form id="${formId}" data-form="general-settings" class="settings-form"><div class="settings-grid"><div class="stack"><section class="card"><div class="settings-heading">${icon('monitor')}<div><h2>本机面板</h2><p>面板的监听与界面设置</p></div></div><div class="form-grid"><label class="field"><span>监听地址</span><input name="listen" required value="${e(s.listen)}"></label><label class="field"><span>端口</span><input type="number" name="port" min="1" max="65535" required value="${s.port}"></label><label class="field"><span>界面语言</span><select name="language"><option>简体中文</option></select></label></div></section><section class="card"><div class="settings-heading">${icon('link')}<div><h2>订阅下载服务</h2><p>客户端订阅的持续在线入口</p></div></div><div class="form-grid" style="grid-template-columns:1.2fr 1fr"><label class="field"><span>服务地址</span><input name="serviceUrl" type="url" required value="${e(s.serviceUrl)}"></label><label class="field"><span>承载服务器</span><select name="hostServer">${state.servers.map(server=>'<option value="'+e(server.id)+'" '+(s.hostServer===server.id?'selected':'')+'>'+e(server.region+' · '+server.id)+'</option>').join('')}</select></label></div><p class="hint hint-icon mt">${icon('info')}订阅入口持续在线，本机面板可关闭。</p></section><section class="card"><div class="settings-heading">${icon('file')}<div><h2>检查与日志</h2><p>服务检查、证书提醒与日志保留</p></div></div><div class="form-grid"><label class="field"><span>健康检查间隔（秒）</span><input type="number" name="interval" min="10" max="86400" required value="${s.interval}"></label><label class="field"><span>证书到期提醒（小时）</span><input type="number" name="certificateHours" min="1" max="720" required value="${s.certificateHours}"></label><label class="field"><span>操作日志保留</span><select name="logDays">${[30,90,180,365].map(days=>'<option value="'+days+'" '+(s.logDays===days?'selected':'')+'>'+days+' 天</option>').join('')}</select></label></div></section></div><div class="stack"><section class="card"><h2 class="mb">本机环境</h2>${[['Python 可用','3.12.9'],['SSH 可用','OpenSSH 9.9'],['Mihomo 可用','v1.19.0']].map(([label,value])=>'<div class="environment-item">'+icon('checkCircle')+'<strong>'+label+'</strong>'+badge(value)+'</div>').join('')}<p class="hint mt-sm">示例环境状态</p></section><section class="card"><div class="settings-heading">${icon('shield')}<h2>权限与凭据</h2></div><ul class="effect-list"><li>${icon('check')}SSH 私钥仅保存在本机</li><li>${icon('check')}各服务器独立验证节点身份</li><li>${icon('check')}各条订阅分别管理访问权限</li></ul></section></div></div><div class="card settings-footer"><p class="hint hint-icon">${icon('clock')}修改后保存生效</p><div class="actions">${button('取消修改','refresh')}<button type="submit" class="button primary">${icon('save')}保存设置</button></div></div></form>`;
+  }
+
+  function openDialog(title,subtitle,body,drawer=false) {
+    closeMenu();
+    const dialog=$('#dialog');if(dialog.open)dialog.close();
+    dialog.className=drawer?'drawer':'';
+    dialog.innerHTML=`<div class="dialog-layout"><div class="dialog-heading"><div><h2 id="dialog-title">${e(title)}</h2>${subtitle?'<p>'+e(subtitle)+'</p>':''}</div>${iconButton('关闭弹窗','close-dialog','','close','borderless')}</div>${body}</div>`;
+    dialog.showModal();
+  }
+  function closeDialog(){if($('#dialog').open)$('#dialog').close();}
+  function serverFormHTML(server,modal=true) {
+    const s=server||{name:'',country:'SG',ip:'',sshUser:'ubuntu',sshPort:22,keyName:''};
+    const fields=`<label class="field"><span>服务器名称</span><input name="name" value="${e(s.name)}" placeholder="例如：新加坡02" maxlength="40" required autocomplete="off"></label><label class="field"><span>地区</span><select name="country">${regions.map(region=>'<option value="'+region.code+'" '+(s.country===region.code?'selected':'')+'>'+region.name+'</option>').join('')}</select></label><label class="field"><span>公网 IP</span><input name="ip" value="${e(s.ip)}" placeholder="例如：198.51.100.21" required autocomplete="off" inputmode="decimal"></label><div class="form-grid"><label class="field"><span>SSH 用户</span><input name="sshUser" value="${e(s.sshUser)}" required maxlength="32"></label><label class="field"><span>SSH 端口</span><input name="sshPort" value="${s.sshPort}" type="number" min="1" max="65535" required></label></div><div class="field"><span>SSH 私钥</span><label class="file-picker">${icon('folder')}<span data-file-label>${e(s.keyName||'选择本机私钥')}</span><input type="file" name="keyFile" accept=".pem,.key" aria-label="选择本机私钥"></label><small>原型只显示文件名，不读取私钥内容。</small></div><div class="notice">${icon('info')}保存服务器后可单独部署节点。</div>`;
+    const footer=`${button('测试连接','test-connection',server?.id||'')}${modal?button('取消','close-dialog'):''}<button type="submit" class="button primary">保存服务器</button>`;
+    return `<form data-form="server" data-id="${e(server?.id||'')}"><div class="${modal?'dialog-body form-stack':'form-stack'}">${fields}</div><div class="${modal?'dialog-footer':'form-footer'}">${footer}</div></form>`;
+  }
+  function showServerForm(id=''){const server=serverById(id);openDialog(server?'编辑服务器':'添加服务器','连接参数与地区设置',serverFormHTML(server),true);}
+  function showServerDetails(id) {
+    const server=serverById(id);if(!server)return;
+    const nodes=state.nodes.filter(node=>node.serverId===id);
+    openDialog(server.region+' · '+server.id,'服务器详情',`<div class="dialog-body"><div class="between mb"><h3>${e(server.name)}</h3>${badge(server.online?'在线':'离线',server.online?'green':'amber',true)}</div><dl class="detail-list"><div><dt>公网 IP</dt><dd>${e(server.ip)}</dd></div><div><dt>SSH 用户</dt><dd>${e(server.sshUser)}</dd></div><div><dt>SSH 端口</dt><dd>${server.sshPort}</dd></div><div><dt>私钥文件</dt><dd>${e(server.keyName||'尚未选择')}</dd></div><div><dt>节点数量</dt><dd>${nodes.length}</dd></div></dl><div class="notice mt">${icon('info')}服务器独立运行，订阅和代理服务持续在线。</div></div><div class="dialog-footer">${button('编辑','edit-server',id)}${button('部署节点','deploy-server',id)}${button('运行诊断','diagnose-server',id,'primary','play')}</div>`,true);
+  }
+  function showNodeForm(id='') {
+    const node=state.nodes.find(item=>item.id===id)||{name:'',serverId:state.servers.find(server=>server.online)?.id||state.servers[0]?.id||'',protocol:'REALITY',port:443};
+    if(!state.servers.length){toast('请先添加一台服务器。','amber');return;}
+    openDialog(id?'编辑节点':'新增节点','按服务器配置独立的协议入口',`<form data-form="node" data-id="${e(id)}"><div class="dialog-body form-stack"><label class="field"><span>节点名称</span><input name="name" value="${e(node.name)}" placeholder="例如：新加坡05" maxlength="40" required></label><label class="field"><span>所属服务器</span><select name="serverId">${state.servers.map(server=>'<option value="'+e(server.id)+'" '+(node.serverId===server.id?'selected':'')+'>'+e(server.region+' · '+server.id)+'</option>').join('')}</select></label><div class="form-grid"><label class="field"><span>协议</span><select name="protocol" data-node-protocol>${['REALITY','Trojan','Hysteria2'].map(protocol=>'<option '+(protocol===node.protocol?'selected':'')+'>'+protocol+'</option>').join('')}</select></label><label class="field"><span>监听端口</span><input type="number" name="port" min="1" max="65535" value="${node.port}" required></label></div><div class="notice">${icon('info')}各条订阅分别管理节点访问凭据。</div></div><div class="dialog-footer">${button('取消','close-dialog')}<button type="submit" class="button primary">保存节点</button></div></form>`);
+  }
+  function showSubscriptionForm(id='') {
+    const sub=subById(id)||{name:'',notes:'',regions:['HK','SG','US'],protocols:['REALITY','Trojan','Hysteria2'],strategy:'fallback',enabled:true};
+    const count=state.nodes.filter(node=>sub.regions.includes(serverById(node.serverId)?.country)&&sub.protocols.includes(node.protocol)).length;
+    const offline=scopedServers(sub).some(server=>!server.online);
+    openDialog(id?'编辑订阅':'新建订阅',id?sub.name:'为不同设备或家人创建独立授权',`<form data-form="subscription" data-id="${e(id)}"><div class="dialog-body form-stack"><label class="field"><span>订阅名称</span><input name="name" value="${e(sub.name)}" placeholder="例如：旅行设备" required maxlength="40" autocomplete="off"></label><label class="field"><span>备注</span><input name="notes" value="${e(sub.notes)}" placeholder="个人使用" maxlength="120"></label><fieldset class="field-set"><legend>授权地区</legend><div class="checkbox-group">${regions.map(region=>`<label class="checkbox"><input type="checkbox" name="regions" value="${region.code}" ${sub.regions.includes(region.code)?'checked':''}>${region.name}</label>`).join('')}</div></fieldset><fieldset class="field-set"><legend>允许协议</legend><div class="checkbox-group">${['REALITY','Trojan','Hysteria2'].map(protocol=>`<label class="checkbox"><input type="checkbox" name="protocols" value="${protocol}" ${sub.protocols.includes(protocol)?'checked':''}>${protocol}</label>`).join('')}</div></fieldset><div class="field"><span>节点范围</span><div class="notice">所选地区和协议的全部节点 · <strong id="node-scope-count">${count}</strong> 个</div></div><label class="field"><span>默认策略</span><select name="strategy">${[['fallback','故障回退'],['manual','手动选择'],['latency','延迟优选']].map(([value,label])=>'<option value="'+value+'" '+(sub.strategy===value?'selected':'')+'>'+label+'</option>').join('')}</select></label><div class="region-chain" style="margin:0">${state.rules.order.map((code,index)=>(index?icon('arrow'):'')+badge(regionName(code))).join('')}</div><label class="between"><span class="small-text">启用订阅</span><input class="switch-input" type="checkbox" name="enabled" aria-label="启用订阅" ${sub.enabled?'checked':''}></label><div id="sub-offline-note" class="notice amber" ${offline?'':'hidden'}>${icon('alert')}离线地区的授权将显示待同步。</div><p class="hint hint-icon">${icon('info')}仅发布已完成授权的节点。</p></div><div class="dialog-footer"><span class="hint">独立链接和节点凭据</span>${button('取消','close-dialog')}<button type="submit" class="button primary">${id?'保存修改':'创建订阅'}</button></div></form>`,true);
+  }
+  function subscriptionUrl(sub) {return state.settings.serviceUrl.replace(/\/$/,'')+'/s/demo-'+sub.id+'-v'+sub.linkVersion;}
+  function showSubscriptionLink(id) {
+    const sub=subById(id);if(!sub)return;
+    openDialog('订阅链接',sub.name,`<div class="dialog-body form-stack"><label class="field"><span>独立下载地址</span><input id="subscription-url" readonly value="${e(subscriptionUrl(sub))}"></label><div class="notice blue">${icon('info')}示例链接 · 版本 v${sub.linkVersion} · 节点凭据版本 v${sub.credentialVersion}</div><p class="hint">在客户端中导入订阅链接后，可使用已完成授权的节点。</p></div><div class="dialog-footer">${button('下载示例配置','download-sub',id,'','download')}${button('复制链接','copy-sub',id,'primary','copy')}</div>`);
+  }
+  function showReset(id,scope='all') {
+    const sub=subById(id);if(!sub)return;
+    const offline=scopedServers(sub).filter(server=>!server.online).map(server=>server.region).join('、');
+    openDialog('重置订阅',sub.name,`<form data-form="reset-subscription" data-id="${e(id)}"><div class="dialog-body form-stack"><label class="option-card"><input type="radio" name="scope" value="link" ${scope==='link'?'checked':''}><div><strong>仅重置订阅链接</strong><p>旧下载地址失效，节点凭据保留。</p></div></label><label class="option-card"><input type="radio" name="scope" value="all" ${scope==='all'?'checked':''}><div><strong>重置链接及节点凭据</strong><p>生成新的链接、UUID 和密码。</p></div></label><div id="reset-all-effects" class="notice" ${scope==='all'?'':'hidden'}><ul class="effect-list"><li>${icon('check')}旧配置在各服务器同步后失效</li><li>${icon('check')}客户端需要重新导入</li><li>${icon('check')}不影响其他订阅</li></ul></div><div id="reset-offline-note" class="notice amber" ${scope==='all'&&offline?'':'hidden'}>${icon('alert')}${e(offline)}当前离线，将显示待同步。</div><label id="reset-ack-row" class="checkbox" ${scope==='all'?'':'hidden'}><input type="checkbox" name="acknowledged">我已了解需要重新导入</label></div><div class="dialog-footer">${button('取消','close-dialog')}<button id="reset-confirm" type="submit" class="button primary" ${scope==='all'?'disabled':''}>确认重置</button></div></form>`);
+  }
+  function showDelete(id) {
+    const sub=subById(id);if(!sub)return;
+    openDialog('删除订阅',sub.name,`<form data-form="delete-subscription" data-id="${e(id)}"><div class="dialog-body form-stack"><p class="small-text">删除此订阅将撤销它的独立链接和访问权限。其他订阅继续使用。</p><div class="notice">${icon('audit')}操作日志继续保留。</div>${scopedServers(sub).some(server=>!server.online)?'<div class="notice amber">'+icon('clock')+'离线服务器的撤销任务将继续等待同步。</div>':''}</div><div class="dialog-footer">${button('取消','close-dialog')}<button type="submit" class="button danger">${icon('trash')}删除订阅</button></div></form>`);
+  }
+  function showPendingTask(id) {
+    const task=pendingTasks().find(item=>item.id===id);if(!task){toast('此任务已完成同步。');return;}
+    openDialog('同步任务',task.name+' · '+task.label,`<div class="dialog-body"><div class="notice amber mb">${icon('clock')}等待离线服务器恢复连接后应用变更。</div>${task.serverIds.map(serverId=>'<div class="mini-result">'+icon('server')+'<span>'+e(serverById(serverId)?.region||serverId)+' · '+e(serverId)+'</span>'+badge('待同步','amber',true)+'</div>').join('')}</div><div class="dialog-footer">${button('关闭','close-dialog')}${button('重试同步','retry-task',id,'primary','refresh')}</div>`);
+  }
+  function showAuditTask(id) {
+    const item=state.audit.find(row=>row.id===id);if(!item)return;
+    openDialog(item.id,item.action+' · '+item.object,`<div class="dialog-body"><p class="small-text mb">${e(item.summary)}</p>${item.results.map(result=>'<div class="mini-result">'+icon('server')+'<span>'+e(result.serverId)+'</span>'+badge(result.label,statusColor(result.status),true)+'</div>').join('')||'<div class="notice green">'+icon('checkCircle')+'本机操作已完成</div>'}</div><div class="dialog-footer">${button('关闭','close-dialog')}${item.status==='partial'?button('重试同步','retry-audit',item.id,'primary','refresh'):''}</div>`);
+  }
+  function closeMenu(){const menu=$('#popover');menu.hidden=true;menu.innerHTML='';}
+  function showMenu(items,anchor) {
+    const menu=$('#popover');menu.innerHTML=items.map(item=>item==='divider'?'<div class="menu-divider"></div>':`<button type="button" role="menuitem" class="menu-item ${item.danger?'danger':''}" data-action="${item.action}" data-id="${e(item.id||'')}">${icon(item.icon||'info')}${e(item.label)}</button>`).join('');
+    menu.hidden=false;const rect=anchor.getBoundingClientRect();
+    const width=menu.offsetWidth,height=menu.offsetHeight;
+    menu.style.left=Math.max(12,Math.min(innerWidth-width-12,rect.right-width))+'px';
+    menu.style.top=Math.max(12,Math.min(innerHeight-height-12,rect.bottom+7))+'px';
+    menu.querySelector('button')?.focus();
+  }
+  function configPreview(sub) {
+    const policy=sub?.strategy || state.rules.policy;const scope=sub?.regions || state.rules.order;
+    const groupType={manual:'select',fallback:'fallback',latency:'url-test'}[policy];
+    return '# Self VPN · 示例配置预览\n# 本原型不包含真实节点凭据\nmode: rule\nmixed-port: 7890\nproxy-groups:\n  - name: 地区代理\n    type: '+groupType+'\n    proxies:\n'+scope.map(code=>'      - '+regionName(code)).join('\n')+'\n    interval: '+state.rules.interval+'\n    url: https://www.gstatic.com/generate_204\nrules:\n  - GEOIP,LAN,DIRECT\n  - GEOIP,CN,DIRECT\n  - MATCH,地区代理\n';
+  }
+  function showConfig() {openDialog('配置预览','当前客户端策略与分流规则',`<div class="dialog-body"><pre class="code-preview">${e(configPreview())}</pre></div><div class="dialog-footer">${button('关闭','close-dialog')}${button('下载示例配置','download-config','','primary','download')}</div>`);}
+  function showRestore(id) {
+    const backup=state.backups.find(item=>item.id===id);if(!backup)return;
+    openDialog('恢复备份',backup.name,`<form data-form="restore-backup" data-id="${e(id)}"><div class="dialog-body"><div class="notice blue">${icon('info')}将恢复 ${e(backup.time)} 保存的示例状态，备份列表继续保留。</div></div><div class="dialog-footer">${button('取消','close-dialog')}<button type="submit" class="button primary">恢复备份</button></div></form>`);
+  }
+  function showResetDemo() {
+    openDialog('恢复初始示例','重置此原型的演示状态',`<form data-form="reset-demo"><div class="dialog-body"><p class="small-text">将恢复 3 台服务器、4 条订阅和初始示例日志。可以先在“备份恢复”中导出当前状态。</p></div><div class="dialog-footer">${button('取消','close-dialog')}<button type="submit" class="button primary">恢复示例</button></div></form>`);
+  }
+
+  function download(name,content,type='text/plain;charset=utf-8'){
+    const url=URL.createObjectURL(new Blob([content],{type}));const link=document.createElement('a');
+    link.href=url;link.download=name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  async function copySubscription(id){
+    const sub=subById(id);if(!sub)return;
+    try{if(!navigator.clipboard)throw new Error('clipboard');await navigator.clipboard.writeText(subscriptionUrl(sub));toast('已复制订阅链接。');}
+    catch{showSubscriptionLink(id);$('#subscription-url')?.select();toast('链接已选中，可直接复制。','amber');}
+  }
+  function validIP(value){const parts=String(value).trim().split('.');return parts.length===4&&parts.every(part=>/^\d{1,3}$/.test(part)&&Number(part)>=0&&Number(part)<=255);}
+  function retrySubscription(id){
+    const sub=subById(id);if(!sub)return;
+    const results=applySync(sub);record('订阅管理','重试同步',sub.name,'重新下发此订阅的目标状态',results,{subId:sub.id,error:results.some(item=>item.status==='pending')?'离线服务器仍待同步':''});
+    persist();render();const count=syncCounts(sub);toast(count.applied+'/'+count.total+' 台服务器已生效'+(isPending(sub)?'，离线地区仍待同步。':'。'),isPending(sub)?'amber':'green');
+  }
+  function retryTask(id){
+    const task=pendingTasks().find(item=>item.id===id);if(!task){closeDialog();toast('任务已经同步完成。');return;}
+    if(id.startsWith('sub:')){closeDialog();retrySubscription(id.slice(4));return;}
+    const results=task.serverIds.map(serverId=>({serverId,status:serverById(serverId)?.online?'success':'pending',label:serverById(serverId)?.online?'已生效':'待同步'}));
+    const remaining=results.filter(item=>item.status==='pending').map(item=>item.serverId);
+    const collection=id.startsWith('revoke:')?state.revocations:state.maintenance;const item=collection.find(row=>row.id===id.slice(id.indexOf(':')+1));
+    if(item)item.serverIds=remaining;
+    state.revocations=state.revocations.filter(row=>row.serverIds.length);state.maintenance=state.maintenance.filter(row=>row.serverIds.length);
+    record('订阅管理','重试同步',task.name,task.label,results);persist();closeDialog();render();toast(remaining.length?'部分服务器仍待同步。':'同步任务已完成。',remaining.length?'amber':'green');
+  }
+  async function runDiagnostic(serverId){
+    const server=serverById(serverId);if(!server)return;
+    closeDialog();toast('正在运行 '+server.region+' 的示例诊断。');
+    await new Promise(resolve=>setTimeout(resolve,350));
+    const report={id:'DIAG-'+Date.now().toString().slice(-6),serverId:server.id,time:stamp(),status:server.online?'success':'failed'};
+    state.diagnostics.unshift(report);state.diagnostics=state.diagnostics.slice(0,100);ui.diagnosticId=report.id;
+    record('诊断日志','运行诊断',server.id,server.online?'连接、服务、节点和订阅检查通过':'SSH 连接超时，后续检查未执行',[{serverId:server.id,status:server.online?'success':'failed',label:server.online?'通过':'SSH 超时'}],{status:report.status});
+    ui.filters.diagnostics={server:'all',status:'all'};persist();navigate('diagnostics');toast(server.online?'示例诊断通过。':'SSH 连接超时，后续检查未执行。',server.online?'green':'amber');
+  }
+  function updateRules(){
+    state.rules.updated=stamp();const results=state.servers.map(server=>({serverId:server.id,status:server.online?'success':'pending',label:server.online?'已更新':'待同步'}));
+    const pending=results.filter(item=>item.status==='pending').map(item=>item.serverId);state.maintenance=state.maintenance.filter(task=>task.id!=='rules-update');
+    if(pending.length)state.maintenance.push({id:'rules-update',name:'分流规则',label:'规则资源更新',serverIds:pending});
+    record('分流规则','更新规则','全部服务器','更新国内域名及 IP 规则资源',results);persist();render();toast((results.length-pending.length)+'/'+results.length+' 台服务器已更新'+(pending.length?'，离线地区待同步。':'。'),pending.length?'amber':'green');
+  }
+  function saveRules(){
+    const ids=state.rules.selected.filter(id=>subById(id));if(!ids.length){toast('请先选择应用的订阅。','amber');return;}
+    const results=[];
+    for(const id of ids){const sub=subById(id);sub.strategy=state.rules.policy;for(const result of applySync(sub)){if(!results.some(item=>item.serverId===result.serverId))results.push(result);}}
+    record('分流规则','应用分流规则',ids.map(id=>subById(id).name).join('、'),'保存客户端策略并更新所选订阅',results);
+    persist();render();toast('已更新 '+ids.length+' 条示例订阅'+(results.some(item=>item.status==='pending')?'，离线地区待同步。':'。'),results.some(item=>item.status==='pending')?'amber':'green');
+  }
+  function snapshot(){const data=clone(state);data.backups=[];return data;}
+  function createBackup(){
+    const backup={id:uid('backup'),name:'本机备份 '+(state.backups.length+1),time:stamp(),data:snapshot()};
+    state.backups.unshift(backup);state.backups=state.backups.slice(0,10);record('系统设置','创建备份',backup.name,'保存当前原型的完整示例状态');persist();render();toast('本机备份已保存。');
+  }
+  function navigate(page){if(location.hash==='#'+page){ui.page=page;render();}else location.hash=page;}
+  function refreshAfterSave(message,color='green'){persist();closeDialog();render();toast(message,color);}
+  function deployServer(id){
+    const server=serverById(id);if(!server)return;
+    if(!server.online){record('服务器管理','部署节点',id,'SSH 连接超时，部署未执行',[{serverId:id,status:'failed',label:'未执行'}],{status:'failed'});persist();toast('示例服务器离线，部署未执行。','amber');return;}
+    let count=0;
+    for(const [index,endpoint] of endpoints.entries()){
+      if(state.nodes.some(node=>node.serverId===id&&node.port===endpoint.port&&node.protocol===endpoint.protocol))continue;
+      state.nodes.push({...endpoint,id:uid('node'),serverId:id,name:server.region+String(index+1).padStart(2,'0'),enabled:true});count++;
+    }
+    record('服务器管理','部署节点',id,'新增 '+count+' 个示例协议入口',[{serverId:id,status:'success',label:'已部署'}]);
+    refreshAfterSave(count?'示例部署完成，已新增 '+count+' 个节点。':'默认协议节点已经就绪。');
+  }
+  function updateSubScopePreview(form){
+    const fields=new FormData(form),scope=fields.getAll('regions'),protocols=fields.getAll('protocols');
+    const count=state.nodes.filter(node=>scope.includes(serverById(node.serverId)?.country)&&protocols.includes(node.protocol)).length;
+    const countElement=$('#node-scope-count');if(countElement)countElement.textContent=count;
+    const notice=$('#sub-offline-note');if(notice)notice.hidden=!state.servers.some(server=>scope.includes(server.country)&&!server.online);
+  }
+  function updateResetForm(form){
+    const scope=new FormData(form).get('scope');const all=scope==='all';const sub=subById(form.dataset.id);
+    $('#reset-all-effects').hidden=!all;$('#reset-ack-row').hidden=!all;
+    $('#reset-offline-note').hidden=!all||!scopedServers(sub).some(server=>!server.online);
+    $('#reset-confirm').disabled=all&&!form.elements.acknowledged.checked;
+  }
+  async function handleAction(action,element){
+    const id=element.dataset.id||'';
+    if(!['sub-menu','server-menu','demo-menu'].includes(action))closeMenu();
+    switch(action){
+      case 'open-nav':setNavigation(true);break;
+      case 'close-nav':setNavigation(false);break;
+      case 'close-dialog':closeDialog();break;
+      case 'refresh':render();toast('已刷新示例状态。');break;
+      case 'filter':{ui.filters[ui.page]??={};ui.filters[ui.page][element.dataset.key]=id;ui.nodePage=1;render();break;}
+      case 'add-server':showServerForm();break;
+      case 'edit-server':showServerForm(id);break;
+      case 'manage-server':showServerDetails(id);break;
+      case 'deploy-server':deployServer(id);break;
+      case 'server-menu':showMenu([{label:'服务器详情',action:'manage-server',id,icon:'server'},{label:'编辑连接设置',action:'edit-server',id,icon:'edit'},{label:'部署默认节点',action:'deploy-server',id,icon:'play'}],element);break;
+      case 'test-connection':{
+        const form=element.closest('form');const fields=new FormData(form);
+        if(!validIP(fields.get('ip'))||!fields.get('sshUser')){toast('请先填写有效 IP 和 SSH 用户。','amber');return;}
+        element.disabled=true;const label=element.innerHTML;element.textContent='正在测试…';
+        await new Promise(resolve=>setTimeout(resolve,350));element.disabled=false;element.innerHTML=label;
+        const online=id?serverById(id)?.online:true;toast(online?'示例连接测试通过。':'示例连接失败：SSH 连接超时。',online?'green':'amber');break;
+      }
+      case 'add-node':showNodeForm();break;
+      case 'edit-node':showNodeForm(id);break;
+      case 'select-node':ui.nodeId=id;render();break;
+      case 'node-page':ui.nodePage=Number(id);render();break;
+      case 'new-sub':showSubscriptionForm();break;
+      case 'edit-sub':showSubscriptionForm(id);break;
+      case 'select-sub':ui.subId=id;if(ui.page==='subscriptions')render();else navigate('subscriptions');break;
+      case 'toggle-sub':{
+        const sub=subById(id);if(!sub)break;const before=sub.enabled;sub.enabled=!sub.enabled;const results=applySync(sub);
+        record('订阅管理',sub.enabled?'启用订阅':'停用订阅',sub.name,'订阅状态：'+(before?'启用':'停用')+' → '+(sub.enabled?'启用':'停用'),results,{subId:id,error:isPending(sub)?'离线服务器仍待同步':''});
+        ui.subId=id;persist();render();toast(sub.name+'已'+(sub.enabled?'启用':'停用')+(isPending(sub)?'，离线地区待同步。':'。'),isPending(sub)?'amber':'green');break;
+      }
+      case 'sub-menu':{
+        const sub=subById(id);if(!sub)break;
+        showMenu([{label:'编辑授权',action:'edit-sub',id,icon:'edit'},{label:sub.enabled?'停用订阅':'启用订阅',action:'toggle-sub',id,icon:sub.enabled?'minus':'checkCircle'},'divider',{label:'重置链接',action:'reset-link',id,icon:'link'},{label:'重置全部凭据',action:'reset-all',id,icon:'refresh'},'divider',{label:'删除订阅',action:'delete-sub',id,icon:'trash',danger:true}],element);break;
+      }
+      case 'copy-sub':await copySubscription(id);break;
+      case 'sub-link':showSubscriptionLink(id);break;
+      case 'reset-link':showReset(id,'link');break;
+      case 'reset-all':showReset(id,'all');break;
+      case 'delete-sub':showDelete(id);break;
+      case 'retry-sub':retrySubscription(id);break;
+      case 'task-detail':showPendingTask(id);break;
+      case 'retry-task':retryTask(id);break;
+      case 'select-diagnostic':ui.diagnosticId=id;render();break;
+      case 'diagnose-server':await runDiagnostic(id);break;
+      case 'run-diagnostics':{
+        const current=state.diagnostics.find(report=>report.id===ui.diagnosticId)?.serverId;
+        openDialog('运行诊断','检查连接、服务、节点和订阅',`<form data-form="run-diagnostics"><div class="dialog-body"><label class="field"><span>选择服务器</span><select name="serverId">${state.servers.map(server=>'<option value="'+e(server.id)+'" '+(current===server.id?'selected':'')+'>'+e(server.region+' · '+server.id)+'</option>').join('')}</select></label><p class="hint mt">此操作只进行状态检查。</p></div><div class="dialog-footer">${button('取消','close-dialog')}<button type="submit" class="button primary">${icon('play')}运行诊断</button></div></form>`);break;
+      }
+      case 'select-audit':ui.auditId=id;render();break;
+      case 'audit-task':showAuditTask(id);break;
+      case 'retry-audit':{
+        const item=state.audit.find(row=>row.id===id);if(!item)break;
+        if(item.subId&&subById(item.subId)){closeDialog();retrySubscription(item.subId);break;}
+        const task=pendingTasks().find(task=>task.name===item.object);if(task){retryTask(task.id);break;}
+        const results=item.results.map(result=>({...result,status:serverById(result.serverId)?.online?'success':'pending',label:serverById(result.serverId)?.online?'已生效':'待同步'}));
+        record(item.module,'重试同步',item.object,'重新应用任务变更',results);refreshAfterSave(results.some(result=>result.status==='pending')?'离线地区仍待同步。':'重试已完成。',results.some(result=>result.status==='pending')?'amber':'green');break;
+      }
+      case 'rule-policy':state.rules.policy=id;persist();render();break;
+      case 'move-region':{
+        const index=state.rules.order.indexOf(id),next=index+Number(element.dataset.direction);if(next<0||next>=state.rules.order.length)break;
+        [state.rules.order[index],state.rules.order[next]]=[state.rules.order[next],state.rules.order[index]];persist();render();break;
+      }
+      case 'update-rules':updateRules();break;
+      case 'save-rules':saveRules();break;
+      case 'preview-config':showConfig();break;
+      case 'download-config':download('self-vpn-example.yaml',configPreview());toast('示例配置已下载。');break;
+      case 'download-sub':{const sub=subById(id);if(sub){download(sub.name+'-example.yaml',configPreview(sub));toast('示例配置已下载。');}break;}
+      case 'settings-tab':ui.settingsTab=id;render();break;
+      case 'save-settings':$('#'+(ui.settingsTab==='security'?'security-settings':'general-settings'))?.requestSubmit();break;
+      case 'create-backup':createBackup();break;
+      case 'restore-backup':showRestore(id);break;
+      case 'export-backup':download('self-vpn-prototype-'+stamp().slice(0,10)+'.json',JSON.stringify(snapshot(),null,2),'application/json');toast('示例数据备份已导出。');break;
+      case 'reset-demo':showResetDemo();break;
+      case 'export-audit':{
+        const cell=value=>{let text=String(value??'');if(/^[=+@-]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
+        const rows=[['时间','操作者','模块','操作','对象','结果','变更摘要'],...state.audit.map(item=>[item.time,item.actor,item.module,item.action,item.object,statusLabels[item.status],item.summary])];
+        download('self-vpn-操作日志.csv','\ufeff'+rows.map(row=>row.map(cell).join(',')).join('\n'),'text/csv;charset=utf-8');toast('操作日志已导出。');break;
+      }
+      case 'export-diagnostics':download('self-vpn-诊断报告.json',JSON.stringify(state.diagnostics,null,2),'application/json');toast('诊断报告已导出。');break;
+      case 'demo-menu':showMenu([{label:'香港恢复在线',action:'demo-hk-online',icon:'checkCircle'},{label:'香港离线场景',action:'demo-hk-offline',icon:'clock'},'divider',{label:'恢复初始示例',action:'reset-demo',icon:'refresh'}],element);break;
+      case 'demo-hk-online':
+      case 'demo-hk-offline':{
+        const server=serverById('HK-01');if(!server)break;server.online=action==='demo-hk-online';
+        record('服务器管理','切换示例场景',server.id,server.online?'香港恢复在线，等待重试同步':'香港离线，其他地区继续运行');
+        persist();render();toast(server.online?'香港已恢复在线，可重试待同步任务。':'已切换为香港离线的示例场景。');break;
+      }
+    }
+  }
+  async function handleSubmit(form){
+    const fields=new FormData(form),id=form.dataset.id||'';
+    switch(form.dataset.form){
+      case 'server':{
+        const ip=String(fields.get('ip')).trim();if(!validIP(ip)){toast('请输入有效的 IPv4 地址。','amber');form.elements.ip.focus();return;}
+        if(state.servers.some(server=>server.id!==id&&server.ip===ip)){toast('此服务器地址已存在。','amber');return;}
+        const existing=serverById(id),country=String(fields.get('country'));const key=form.elements.keyFile.files[0]?.name||existing?.keyName||'';
+        const server={...(existing||{}),id:existing?.id||country+'-'+String(state.servers.filter(server=>server.country===country).length+1).padStart(2,'0'),name:String(fields.get('name')).trim(),country,region:regionName(country),ip,sshUser:String(fields.get('sshUser')).trim(),sshPort:Number(fields.get('sshPort')),keyName:key,online:existing?.online??true};
+        if(!server.name){toast('请填写服务器名称。','amber');return;}
+        if(existing)Object.assign(existing,server);else state.servers.push(server);
+        record('服务器管理',existing?'修改服务器':'添加服务器',server.id,'保存地区和连接参数',[{serverId:server.id,status:'success',label:'已保存'}]);refreshAfterSave('服务器已保存。');break;
+      }
+      case 'node':{
+        const port=Number(fields.get('port')),protocol=String(fields.get('protocol')),serverId=String(fields.get('serverId'));
+        if(state.nodes.some(node=>node.id!==id&&node.serverId===serverId&&node.port===port&&node.protocol===protocol)){toast('此服务器上已存在相同的协议入口。','amber');return;}
+        const node={id:id||uid('node'),name:String(fields.get('name')).trim(),serverId,protocol,port,enabled:true,label:protocol==='REALITY'?'VLESS · REALITY':protocol==='Trojan'?'Trojan · TLS':'Hysteria2',transport:protocol==='Hysteria2'?'UDP':'TCP'};
+        const existing=state.nodes.find(item=>item.id===id);if(existing)Object.assign(existing,node);else state.nodes.push(node);
+        ui.nodeId=node.id;record('节点管理',existing?'修改节点':'新增节点',node.name,'保存协议和监听端口',[{serverId,status:'success',label:'已保存'}]);refreshAfterSave('节点配置已保存。');break;
+      }
+      case 'subscription':{
+        const name=String(fields.get('name')).trim(),scope=fields.getAll('regions'),protocols=fields.getAll('protocols');
+        if(!name){toast('请填写订阅名称。','amber');return;}
+        if(state.subscriptions.some(sub=>sub.id!==id&&sub.name===name)){toast('已存在同名订阅，请换一个名称。','amber');return;}
+        if(!scope.length||!protocols.length){toast('至少选择一个地区和一种协议。','amber');return;}
+        const existing=subById(id);const permissionsChanged=!existing||JSON.stringify(existing.regions)!==JSON.stringify(scope)||JSON.stringify(existing.protocols)!==JSON.stringify(protocols)||existing.enabled!==fields.has('enabled');
+        const sub=existing||{id:uid('sub'),kind:'link',linkVersion:1,credentialVersion:1,lastPull:'尚未拉取',sync:{}};
+        Object.assign(sub,{name,notes:String(fields.get('notes')).trim(),regions:scope,protocols,strategy:String(fields.get('strategy')),enabled:fields.has('enabled')});
+        if(!existing)state.subscriptions.push(sub);
+        const results=permissionsChanged?applySync(sub):scopedServers(sub).map(server=>({serverId:server.id,status:sub.sync[server.id]?.pending?'pending':'success',label:sub.sync[server.id]?.pending?'待同步':'已生效'}));
+        ui.subId=sub.id;record('订阅管理',existing?'修改订阅':'新建订阅',sub.name,'授权地区：'+scope.map(regionName).join('、'),results,{subId:sub.id});
+        ui.filters.subscriptions={status:'all',query:''};persist();closeDialog();navigate('subscriptions');toast('订阅已'+(existing?'保存':'创建')+(isPending(sub)?'，离线地区待同步。':'。'),isPending(sub)?'amber':'green');break;
+      }
+      case 'reset-subscription':{
+        const sub=subById(id);if(!sub)return;const all=fields.get('scope')==='all';
+        if(all&&!fields.has('acknowledged'))return;
+        sub.linkVersion++;let results;
+        if(all){sub.credentialVersion++;results=applySync(sub);}
+        else{const host=serverById(state.settings.hostServer);results=host?[{serverId:host.id,status:host.online?'success':'pending',label:host.online?'已更新':'待同步'}]:[];}
+        record('订阅管理',all?'重置全部凭据':'重置链接',sub.name,all?'更换链接、UUID 和密码，客户端需重新导入':'更换下载地址，节点凭据保留',results,{subId:sub.id});
+        refreshAfterSave(all?'链接与节点凭据已重置'+(isPending(sub)?'，离线地区待同步。':'。'):'订阅链接已重置，节点凭据保留。',all&&isPending(sub)?'amber':'green');break;
+      }
+      case 'delete-subscription':{
+        const sub=subById(id);if(!sub)return;sub.enabled=false;const results=applySync(sub);
+        const pending=results.filter(result=>result.status==='pending').map(result=>result.serverId);
+        if(pending.length)state.revocations.push({id:uid('revocation'),name:sub.name,serverIds:pending});
+        record('订阅管理','删除订阅',sub.name,'删除下载入口并撤销此订阅的独立权限',results);
+        state.subscriptions=state.subscriptions.filter(item=>item.id!==id);state.rules.selected=state.rules.selected.filter(item=>item!==id);
+        refreshAfterSave('订阅已删除，操作记录已保留'+(pending.length?'，离线地区撤销任务待同步。':'。'),pending.length?'amber':'green');break;
+      }
+      case 'run-diagnostics':await runDiagnostic(String(fields.get('serverId')));break;
+      case 'general-settings':{
+        if(state.settings.localOnly&&fields.get('listen')!=='127.0.0.1'){toast('当前为仅本机访问，请使用 127.0.0.1。','amber');return;}
+        Object.assign(state.settings,{listen:String(fields.get('listen')).trim(),port:Number(fields.get('port')),language:String(fields.get('language')),serviceUrl:String(fields.get('serviceUrl')).trim(),hostServer:String(fields.get('hostServer')),interval:Number(fields.get('interval')),certificateHours:Number(fields.get('certificateHours')),logDays:Number(fields.get('logDays'))});
+        record('系统设置','保存设置','本机面板','更新常规设置与维护参数');refreshAfterSave('系统设置已保存。');break;
+      }
+      case 'security-settings':{
+        state.settings.localOnly=fields.has('localOnly');state.settings.maskLogs=fields.has('maskLogs');
+        if(state.settings.localOnly)state.settings.listen='127.0.0.1';
+        record('系统设置','保存安全设置','本机面板','更新访问与日志显示偏好');refreshAfterSave('安全设置已保存。');break;
+      }
+      case 'restore-backup':{
+        const backup=state.backups.find(item=>item.id===id);if(!backup||!validState(backup.data))return;
+        const backups=state.backups;state=clone(backup.data);state.backups=backups;record('系统设置','恢复备份',backup.name,'恢复已保存的示例状态');refreshAfterSave('备份已恢复。');break;
+      }
+      case 'reset-demo':state=seed();persist();closeDialog();setNavigation(false);ui.filters={};ui.subId='sub-work';ui.nodeId='SG-01-3';ui.auditId='TASK-028';ui.diagnosticId='DIAG-030';navigate('overview');toast('已恢复初始示例。');break;
+    }
+  }
+  document.addEventListener('click',event=>{
+    if(event.target.closest('.skip-link')){event.preventDefault();$('#main').focus();return;}
+    const actionElement=event.target.closest('[data-action]');
+    if(actionElement){handleAction(actionElement.dataset.action,actionElement).catch(error=>{console.error(error);toast('操作未完成，请检查输入后重试。','red');});}
+    else if(!event.target.closest('#popover'))closeMenu();
+    if(event.target.closest('.nav-link'))setNavigation(false);
+  });
+  document.addEventListener('submit',event=>{
+    if(!event.target.matches('form[data-form]'))return;event.preventDefault();
+    handleSubmit(event.target).catch(error=>{console.error(error);toast('保存未完成，请检查输入。','red');});
+  });
+  document.addEventListener('input',event=>{
+    const target=event.target;
+    if(target.matches('input[data-filter][type=search]')){ui.filters[ui.page]??={};ui.filters[ui.page][target.dataset.filter]=target.value;ui.nodePage=1;render();}
+  });
+  document.addEventListener('change',async event=>{
+    const target=event.target;
+    if(target.matches('[data-filter]')&&!target.matches('[type=search]')){ui.filters[ui.page]??={};ui.filters[ui.page][target.dataset.filter]=target.value;ui.nodePage=1;render();}
+    if(target.matches('[data-rule]')){if(!target.checkValidity()){target.reportValidity();return;}state.rules[target.dataset.rule]=Number(target.value);persist();}
+    if(target.matches('[data-rule-sub]')){const id=target.dataset.ruleSub;state.rules.selected=target.checked?[...new Set([...state.rules.selected,id])]:state.rules.selected.filter(item=>item!==id);persist();}
+    if(target.matches('[name=keyFile]')){const label=$('[data-file-label]',target.closest('label'));if(label)label.textContent=target.files[0]?.name||'选择本机私钥';}
+    if(target.closest('form[data-form=subscription]')&&target.matches('[name=regions],[name=protocols]'))updateSubScopePreview(target.closest('form'));
+    if(target.closest('form[data-form=reset-subscription]')&&target.matches('[name=scope],[name=acknowledged]'))updateResetForm(target.closest('form'));
+    if(target.matches('[data-node-protocol]')){const field=target.closest('form').elements.port;field.value=target.value==='REALITY'?443:target.value==='Trojan'?20002:20003;}
+    if(target.id==='backup-import'&&target.files[0]){
+      try{const file=target.files[0];if(file.size>2_000_000)throw new Error('size');const imported=JSON.parse(await file.text());if(!validState(imported))throw new Error('schema');
+        const backups=state.backups;state=imported;state.backups=backups;record('系统设置','导入备份',file.name,'恢复导入的示例状态');persist();render();toast('备份已导入。');
+      }catch{toast('备份格式无效，请选择此原型导出的 JSON 文件。','red');target.value='';}
+    }
+  });
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){closeMenu();setNavigation(false);}
+    const menu=$('#popover');
+    if(!menu.hidden&&['ArrowDown','ArrowUp'].includes(event.key)){
+      event.preventDefault();const items=$$('button',menu),index=items.indexOf(document.activeElement),next=(index+(event.key==='ArrowDown'?1:-1)+items.length)%items.length;items[next]?.focus();
+    }
+  });
+  $('#dialog').addEventListener('click',event=>{
+    if(event.target!==$('#dialog'))return;const rect=$('#dialog').getBoundingClientRect();
+    if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)closeDialog();
+  });
+  window.addEventListener('resize',closeMenu);
+  window.addEventListener('hashchange',()=>{const page=location.hash.slice(1);ui.page=nav.some(item=>item[0]===page)?page:'overview';closeDialog();closeMenu();render();window.scrollTo({top:0,behavior:'instant'});});
+  ui.page=nav.some(item=>item[0]===location.hash.slice(1))?location.hash.slice(1):'overview';
+  render();
+})();
+
+</script>
+</body>
+</html>

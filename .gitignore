@@ -1,0 +1,57 @@
+# Real deployment settings and private runtime artifacts
+.env
+.env.*
+*.env
+!.env.example
+# Protect legacy local JSON files if copied back from private backups
+vpn.local.json
+vpn.*.local.json
+.secrets/
+.runtime/
+使用与维护说明.txt
+
+# Private credentials and exported client/server configs
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+secrets.json
+extra-secrets.json
+client.json
+multi-client.*
+multi-metadata.json
+deployment.json
+deployment.env
+flclash.yaml
+xray.json
+extra-xray*.json
+hysteria.yaml
+config.yaml
+candidate.json
+candidate.yaml
+candidate-metadata.json
+*.log
+*.bak
+
+# Local environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+*.db
+*.db-shm
+*.db-wal
+
+# Local design generations, screenshots and export archives
+/designs/panel-v3/
+/designs/panel-v4-flat/
+/designs/panel-v5-rounded-flat/
+/designs/panel-html/preview/
+/designs/*.zip

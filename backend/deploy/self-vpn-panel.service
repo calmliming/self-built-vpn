@@ -1,0 +1,19 @@
+# Install after setting WorkingDirectory / ExecStart / Environment for the host.
+[Unit]
+Description=Self VPN management API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=self-vpn-panel
+WorkingDirectory=/opt/self-vpn
+Environment=SELF_VPN_WORKER_EXTERNAL=1
+ExecStart=/opt/self-vpn/.venv/bin/python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 55139 --no-access-log
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

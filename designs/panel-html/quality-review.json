@@ -1,0 +1,60 @@
+{
+  "date": "2026-11-03",
+  "status": "passed",
+  "artifact": "dist/index.html",
+  "html_sha256": "bc7495294fac243677669ab458b3fb5b61df29905cc8f9b485af81817e496ebf",
+  "automated_checks": {
+    "javascript_syntax": "passed (node --check)",
+    "python_syntax": "passed (AST parse)",
+    "build": "passed",
+    "standalone_assets": "CSS, JavaScript and SVG icons inlined",
+    "preview_http": "200; served bytes match dist/index.html",
+    "preview_script": "started and verified HTTP 200, then stopped"
+  },
+  "browser_checks": [
+    "All eight modules rendered with navigation and example data",
+    "Created a subscription excluding Hong Kong: node count 12 to 8, successful 2/2 server authorization",
+    "Disabled that subscription and confirmed switch, counts and synchronization state",
+    "Reset link: link v2, node credentials v1",
+    "Reset all: acknowledgement required, then link v3 and node credentials v2",
+    "Deleted example subscription: audit retained and Hong Kong revocation stayed pending",
+    "Combined node protocol and text filters returned only Singapore Hysteria2",
+    "Latency policy updated destination label and preview YAML type url-test",
+    "Hong Kong SSH timeout left remaining diagnostic checks unexecuted",
+    "Settings saved interval 600 and retained it after reload",
+    "General, security and backup settings rendered; local backup creation succeeded",
+    "Mobile navigation expanded/collapsed with aria-expanded; example scenario menu reachable",
+    "Restored default data at handoff: 3 servers, 4 subscriptions, 1 pending task"
+  ],
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000,
+      "result": "Desktop overview visually checked",
+      "screenshot": "preview/desktop-overview.jpg"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "result": "Mobile overview and drawer checked; document scrollWidth 390, no page-level horizontal overflow",
+      "screenshots": [
+        "preview/mobile-overview.jpg",
+        "preview/mobile-navigation.jpg"
+      ]
+    }
+  ],
+  "console_errors_and_warnings": [],
+  "design_constraints": {
+    "large_corners": true,
+    "pill_buttons": true,
+    "flat_surfaces": true,
+    "neumorphism": false,
+    "inner_shadows": false,
+    "heavy_shadows": false
+  },
+  "limits": [
+    "Browser-local example state only; no real VPN backend integration",
+    "Backup import/export and downloads are implemented; not every file workflow was exercised in browser",
+    "Cross-browser compatibility beyond the available browser has not been verified"
+  ]
+}

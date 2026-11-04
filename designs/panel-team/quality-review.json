@@ -1,0 +1,34 @@
+{
+  "completed_at": "2026-11-03T11:08:56.219920+00:00",
+  "status": "complete",
+  "live_checks": 25,
+  "offline_checks": 73,
+  "servers": 3,
+  "nodes_per_full_subscription": 18,
+  "active_members": 1,
+  "test_members_revoked_and_removed": true,
+  "legacy_subscription_preserved": true,
+  "preview_url": "http://127.0.0.1:55139/#/overview",
+  "management_host": "local",
+  "subscription_host": "existing_us_vps",
+  "runtime_report": ".runtime/panel/live-acceptance-f7b5cdc9/report.json",
+  "sources": [
+    "frontend/src/",
+    "backend/app/"
+  ],
+  "visual_style": "大圆角、玻璃质感、扁平线性图标",
+  "browser_qa": {
+    "desktop_viewport": [
+      1440,
+      1000
+    ],
+    "mobile_viewport": [
+      390,
+      844
+    ],
+    "modules": 8,
+    "member_form": true,
+    "node_filter": true,
+    "server_detail": true
+  }
+}

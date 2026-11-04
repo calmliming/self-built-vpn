@@ -1,0 +1,13 @@
+export type SyncState = {server_id:string; status:string; applied_enabled:boolean; error:string|null; updated_at:string|null};
+export type Member = {id:string;username:string;display_name:string;role:'admin'|'member';enabled:boolean;regions:string[];exit_region:string|null;revision:number;credential_version:number;created_at:string;last_login:string|null;note:string;ready:boolean;sync_complete:boolean;subscription_url:string|null;sync:SyncState[]};
+export type Check = {name:string;ok:boolean;detail:string};
+export type Metrics = {memory_total_mb?:number;memory_used_mb?:number;disk_total_gb?:number;disk_used_gb?:number;load?:number[];uptime_seconds?:number;certificate_expires?:string;checks?:Check[];team_auth_active?:boolean;member_count?:number;cpu_count?:number};
+export type Server = {id:string;name:string;region:string;country:string;ip:string;health:string;checked_at:string|null;error:string|null;metrics:Metrics;monthly_price:number;node_count:number};
+export type SpeedSample = {server_id:string;node_name:string;protocol:string;status:'complete'|'sampled'|'failed';mbps:number|null;bytes:number;seconds:number|null;tested_at:string;message:string};
+export type SpeedTests = {active:Task|null;samples:SpeedSample[];payload_bytes:number;timeout_seconds:number;source:string;target:string};
+export type TaskEvent = {step:string;status:string;message:string;at:string;checks?:Check[];speed?:SpeedSample;node_name?:string};
+export type Task = {id:string;kind:string;title:string;user_id:string|null;server_id:string|null;status:string;error:string|null;created_at:string;finished_at:string|null;details:TaskEvent[]};
+export type Dashboard = {servers:Server[];me:Member;member_count:number;tasks:Task[];base_cost:number;checked_at:string};
+export type Node = {name:string;type:string;server_id:string;server:string;port:number;transport:string;health:string};
+export type Audit = {id:number;actor:string;action:string;target:string;created_at:string};
+export const regions:Record<string,string> = {hk:'香港',sg:'新加坡',us:'美国'};

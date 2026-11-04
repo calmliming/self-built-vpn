@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "updated_date": "2026-11-03",
+  "active_design": "panel-react-team",
+  "decisions": [
+    {
+      "date": "2026-11-03",
+      "user_instruction": "继续，并记录一下，不要拟态了",
+      "status": "clarified",
+      "scope": "Self VPN 管理面板全部模块及后续实现",
+      "design_direction": "简洁、扁平、清晰的后台界面",
+      "required": [
+        "白色界面和浅灰画布",
+        "细边框和清晰分隔线",
+        "保留原版大圆角与胶囊按钮（按用户后续补充）",
+        "蓝色强调色",
+        "保留8个模块及2张订阅操作流程"
+      ],
+      "disallowed": [
+        "拟态风格",
+        "凸起或凹陷的控件",
+        "内阴影与厚重投影"
+      ],
+      "supersedes": "panel-v3 的拟态和柔光阴影表现；保留其圆角结构",
+      "interpretation_correction": "用户补充明确：保留原版圆角；此前缩小圆角和排除胶囊按钮的解释已撤回。",
+      "previous_interpretation": {
+        "required": [
+          "白色界面和浅灰画布",
+          "细边框和清晰分隔线",
+          "适度圆角",
+          "蓝色强调色",
+          "保留8个模块及2张订阅操作流程"
+        ],
+        "disallowed": [
+          "拟态风格",
+          "凸起或凹陷的控件",
+          "内阴影与厚重投影",
+          "材质高光、渐变与发光",
+          "超大胶囊卡片与按钮"
+        ],
+        "supersedes": "panel-v3 的拟态、大圆角和柔光阴影方向"
+      }
+    },
+    {
+      "date": "2026-11-03",
+      "user_instruction": "但是圆角要保留呀",
+      "status": "accepted",
+      "scope": "Self VPN 管理面板全部10张设计图及后续实现",
+      "design_direction": "大圆角、胶囊按钮与扁平界面",
+      "required": [
+        "保留原版明显的大圆角卡片、弹窗与抽屉",
+        "保留胶囊按钮和圆角导航",
+        "白色表面、细边框与蓝色强调色",
+        "保持全部模块、文案、状态与操作流程"
+      ],
+      "disallowed": [
+        "拟态风格",
+        "凸起或凹陷控件",
+        "内阴影和厚重投影"
+      ],
+      "radius_guidance": {
+        "cards_and_dialogs_px": "28–32",
+        "inputs_px": "16–20",
+        "buttons_and_active_navigation": "半高胶囊圆角"
+      },
+      "clarifies": "上一条“不要拟态”中的表面与阴影要求继续有效；原版圆角继续保留。"
+    },
+    {
+      "date": "2026-11-03",
+      "user_instruction": "设计成html吧；继续完成 HTML 版，保留大圆角，不要拟态，做好后给我预览。",
+      "status": "accepted",
+      "scope": "Self VPN 管理面板全部模块及交互流程",
+      "delivery_format": "零外部依赖、可独立打开的 HTML 交互原型",
+      "required": [
+        "保留明显大圆角与胶囊按钮",
+        "扁平白色表面、浅灰画布、细边框与蓝色强调色",
+        "八个模块、订阅全流程及按服务器同步状态",
+        "桌面与小屏幕可用",
+        "提供本地预览与可维护源码"
+      ],
+      "disallowed": [
+        "拟态风格",
+        "凸起或凹陷控件",
+        "内阴影与厚重投影"
+      ],
+      "data_scope": "示例数据与浏览器 localStorage；未接入真实 VPN 后端",
+      "entry": "panel-html/dist/index.html",
+      "source": "panel-html/src/"
+    },
+    {
+      "date": "2026-11-03",
+      "user_instruction": "按推荐技术栈实现真实后台，保留大圆角，增加玻璃拟态，icon 扁平化",
+      "status": "accepted",
+      "scope": "三台 VPS 的小团队真实管理后台",
+      "required": [
+        "大圆角与胶囊按钮",
+        "半透明玻璃表面、背景模糊与轻盈高光",
+        "扁平线性图标",
+        "真实服务器、成员独立订阅及凭据、逐台撤销状态"
+      ],
+      "supersedes": "历史 HTML 原型关于禁止玻璃效果及仅示例数据的限制",
+      "source": [
+        "frontend/src/",
+        "backend/app/"
+      ]
+    }
+  ],
+  "latest_delivery": {
+    "version": "panel-react-team",
+    "status": "complete",
+    "date": "2026-11-03",
+    "source": [
+      "frontend/src/",
+      "backend/app/"
+    ],
+    "preview_url": "http://127.0.0.1:55139/#/overview",
+    "visual_style": "大圆角、玻璃质感、扁平线性图标",
+    "module_count": 8,
+    "backend": "three_live_vps_connected",
+    "readme": "../backend/README.md",
+    "quality_review": "panel-team/quality-review.json"
+  },
+  "previous_delivery": {
+    "version": "panel-v5-rounded-flat",
+    "status": "reference_only",
+    "date": "2026-11-03",
+    "image_count": 10,
+    "gallery": "panel-v5-rounded-flat/index.html"
+  },
+  "historical_html_delivery": {
+    "version": "panel-html",
+    "status": "complete",
+    "date": "2026-11-03",
+    "entry": "panel-html/dist/index.html",
+    "source": "panel-html/src/",
+    "readme": "panel-html/README.md",
+    "quality_review": "panel-html/quality-review.json",
+    "visual_style": "大圆角与扁平表面；无拟态",
+    "module_count": 8,
+    "backend": "not_connected"
+  }
+}

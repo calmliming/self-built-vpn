@@ -1,0 +1,18 @@
+[Unit]
+Description=Self VPN durable management executor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=self-vpn-panel
+WorkingDirectory=/opt/self-vpn
+ExecStart=/opt/self-vpn/.venv/bin/python -m backend.app.worker
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=330
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

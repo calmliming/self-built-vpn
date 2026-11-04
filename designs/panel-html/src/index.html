@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7fa">
+  <meta name="description" content="Self VPN 个人代理管理面板：大圆角、扁平风格的交互设计原型。">
+  <title>Self VPN · 个人代理管理</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 5 7v9c0 6 7 11 11 13 4-2 11-7 11-13V7Z' fill='%232563eb'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳转到主要内容</a>
+  <div id="mobile-scrim" class="mobile-scrim" data-action="close-nav"></div>
+  <aside id="sidebar" class="sidebar" aria-label="主导航"></aside>
+  <main id="main" class="main" tabindex="-1">
+    <header id="page-header" class="page-header"></header>
+    <section id="view" aria-label="当前页面"></section>
+    <footer class="page-footer"><span>Self VPN</span><span>设计原型 · 示例数据</span></footer>
+  </main>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  <div id="popover" class="popover" role="menu" hidden></div>
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+  <script src="app.js"></script>
+</body>
+</html>
