@@ -8,6 +8,7 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
+from urllib.parse import unquote
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 import team_auth
@@ -73,14 +74,22 @@ class TrafficTests(unittest.TestCase):
             policies = root / 'subscriptions.json'
             store = root / 'usage.json'
             team = root / 'team'
+            legacy = root / 'legacy'
+            legacy.mkdir()
             target = team / TOKEN
             target.mkdir(parents=True)
             config = b'{"proxies":[{"name":"test-only"}]}'
             (target / 'config.yaml').write_bytes(config)
+            for filename in ('config.yaml', 'fleet.yaml'):
+                (legacy / filename).write_bytes(config)
             policy = {'user_id': USER, 'token': TOKEN, 'period': 'lifetime', 'total_bytes': 10**12, 'include_legacy': False}
-            policies.write_text(json.dumps({'members': {USER: policy}, 'server_id': 'us', 'snapshots': {'us': {'users': {USER: {'download': 999999}}}, 'hk': {'users': {USER: {'upload': 7, 'download': 200}}}}}))
+            metadata = {'members': {USER: policy}, 'server_id': 'us', 'legacy_token': TOKEN,
+                        'snapshots': {'us': {'users': {USER: {'download': 999999}}},
+                                      'hk': {'users': {USER: {'upload': 7, 'download': 200}}}}}
+            policies.write_text(json.dumps(metadata))
             store.write_text(json.dumps({'users': {USER: {'upload': 10, 'download': 100}, OTHER: {'download': 99999}}}))
-            with patch.object(traffic, 'POLICIES', policies), patch.object(traffic, 'STORE', store), patch.object(team_auth, 'TEAM_SUB', team):
+            with (patch.object(traffic, 'POLICIES', policies), patch.object(traffic, 'STORE', store),
+                  patch.object(team_auth, 'TEAM_SUB', team), patch.object(team_auth, 'LEGACY_SUB', legacy)):
                 server = ThreadingHTTPServer(('127.0.0.1', 0), team_auth.Handler)
                 thread = threading.Thread(target=server.serve_forever, daemon=True)
                 thread.start()
@@ -92,10 +101,21 @@ class TrafficTests(unittest.TestCase):
                     self.assertEqual(response.status, 200)
                     self.assertEqual(response.read(), config)
                     self.assertEqual(response.getheader('Subscription-Userinfo'), 'upload=17; download=300; total=1000000000000; expire=0')
+                    self.assertIn('filename="self-built-vpn"', response.getheader('Content-Disposition'))
+                    metadata['subscription_name'] = '团队专用 VPN'
+                    policies.write_text(json.dumps(metadata))
                     connection.request('HEAD', path)
                     response = connection.getresponse()
                     self.assertEqual(response.read(), b'')
                     self.assertEqual(response.getheader('Content-Length'), str(len(config)))
+                    encoded = response.getheader('Content-Disposition').split("filename*=UTF-8''")[1]
+                    self.assertEqual(unquote(encoded), metadata['subscription_name'])
+                    for filename in ('config.yaml', 'fleet.yaml'):
+                        connection.request('GET', '/sub/' + TOKEN + '/' + filename)
+                        response = connection.getresponse()
+                        self.assertEqual(response.status, 200)
+                        self.assertEqual(response.read(), config)
+                        self.assertTrue(response.getheader('Content-Disposition').endswith(encoded))
                     (target / 'config.yaml').unlink()
                     connection.request('GET', path)
                     self.assertEqual(connection.getresponse().status, 404)

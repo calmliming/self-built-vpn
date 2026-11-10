@@ -267,7 +267,7 @@ def traffic_task(task):
         except Exception:
             log.warning('Traffic metadata update failed for %s', server.id)
     task_event(task.id, 'traffic', 'succeeded' if passed == len(servers) and published == len(servers) else 'failed',
-               f'已采集 {passed}/{len(servers)} 个地区，已更新 {published}/{len(servers)} 个地区订阅额度')
+               f'已采集 {passed}/{len(servers)} 个地区，已更新 {published}/{len(servers)} 个地区订阅信息')
     if passed == len(servers) and published == len(servers):
         return 'succeeded'
     return 'partial' if passed or published else 'failed'

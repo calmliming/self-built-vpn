@@ -16,17 +16,19 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, delete, func
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session as DatabaseSession
 from sqlalchemy.exc import IntegrityError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .config import COOKIE, FRONTEND, STATE, RUNTIME
 from .db import SessionLocal, migrate
-from .models import User, Session, Server, AccessState, Task, Audit, NodeSpeed, now
+from .models import User, Session, Server, AccessState, Task, Audit, NodeSpeed, PanelSetting, now
 from .security import digest, password_matches, password_hash, seal, unseal, new_credentials
 from .services import bootstrap, create_member, queue_task, task_data, audit
 from .subscriptions import subscription_url, REGIONS
-from .traffic import traffic_data
+from .traffic import SUBSCRIPTION_NAME_KEY, subscription_name, traffic_data
+from team_auth import normalize_subscription_name
 
 class Input(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -67,6 +69,9 @@ class ExitPolicy(Input):
 class TrafficQuota(Input):
     total_bytes: int | None = Field(default=None, gt=0, le=9_000_000_000_000_000, strict=True)
     period: Literal['lifetime', 'month'] = 'month'
+
+class SubscriptionName(Input):
+    name: str = Field(max_length=60)
 
 def database():
     with SessionLocal() as db:
@@ -236,7 +241,22 @@ def create_app(bootstrap_state=True, run_worker=True):
         return {'servers': [server_data(s) for s in servers], 'me': user_data(db, user),
             'member_count': db.scalar(select(func.count()).select_from(User).where(User.deleted == False)) if user.role == 'admin' else 1,
             'tasks': [task_data(t) for t in db.scalars(tasks_query).all()],
+            'subscription_name': subscription_name(db) if user.role == 'admin' else None,
             'base_cost': sum(s.monthly_price for s in servers), 'checked_at': now()}
+
+    @app.patch('/api/settings/subscription-name')
+    def change_subscription_name(body: SubscriptionName, user: User = Depends(admin), db: DatabaseSession = Depends(database)):
+        try:
+            name = normalize_subscription_name(body.name)
+        except ValueError as error:
+            raise HTTPException(422, str(error)) from error
+        statement = insert(PanelSetting).values(key=SUBSCRIPTION_NAME_KEY, value=name)
+        db.execute(statement.on_conflict_do_update(index_elements=[PanelSetting.key], set_={'value': name}))
+        if not db.scalar(select(Task.id).where(Task.kind == 'traffic', Task.status.in_(['queued', 'running']))):
+            queue_task(db, 'traffic', '同步订阅名称与用量', actor_id=user.id)
+        audit(db, user.username, '更新订阅名称', name)
+        db.commit()
+        return {'name': name}
 
     @app.get('/api/servers')
     def servers(user: User = Depends(admin), db: DatabaseSession = Depends(database)):

@@ -15,6 +15,7 @@ import urllib.request
 
 from operations import BASE, SUB, Transaction, apply_service, run, state, validate_xray, write
 from settings import Settings, dump_yaml
+from team_auth import normalize_subscription_name
 
 AUTH_SERVICE = 'self-vpn-team-auth'
 TEAM_SUB = Path('/var/lib/self-vpn/team-subscriptions')
@@ -279,10 +280,27 @@ def traffic_metadata(payload):
     DATA.chmod(0o750)
     os.chown(DATA, 0, grp.getgrnam('self-vpn').gr_gid)
     owner = json.loads((BASE / 'secrets.json').read_text())['subscription_token']
-    value = {'server_id': payload['server_id'], 'members': {p['user_id']: p for p in policies},
-             'legacy_token': owner, 'snapshots': payload.get('snapshots', {})}
+    value = json.loads(POLICIES.read_text()) if POLICIES.exists() else {}
+    value.update(server_id=payload['server_id'], members={p['user_id']: p for p in policies},
+                 legacy_token=owner, snapshots=payload.get('snapshots', {}))
+    if 'subscription_name' in payload:
+        value['subscription_name'] = normalize_subscription_name(payload['subscription_name'])
     write(POLICIES, json.dumps(value), 0o640, 'self-vpn')
     return {'updated': True}
+
+def refresh_traffic_metadata(payload):
+    from traffic_stats import POLICIES
+    installed = BASE / 'team_auth.py'
+    source = Path(__file__).with_name('team_auth.py').read_bytes()
+    if not installed.exists() or installed.read_bytes() == source:
+        return traffic_metadata(payload)
+    # Upgrade the subscription handler on existing team servers only once.
+    with Transaction(paths=[installed, POLICIES], services=[AUTH_SERVICE], pause_renewal=False) as transaction:
+        result = traffic_metadata(payload)
+        changed = write(installed, source, 0o640, 'self-vpn')
+        apply_service(AUTH_SERVICE, changed, transaction)
+        transaction.commit()
+    return result
 
 def install_traffic_files(transaction):
     import grp
@@ -449,7 +467,7 @@ def main(payload):
         from traffic_stats import collect
         print(json.dumps(collect()), flush=True)
     elif action == 'traffic-metadata':
-        print(json.dumps(traffic_metadata(payload)), flush=True)
+        print(json.dumps(refresh_traffic_metadata(payload)), flush=True)
     elif action == 'quota-setup':
         quota_setup(payload, settings)
     elif action == 'quota-poll':

@@ -1,12 +1,14 @@
 # Self-built VPN
 
-已增加接入三台服务器的小团队管理后台：React + TypeScript + Vite、FastAPI、SQLite / SQLAlchemy / Alembic，支持独立成员订阅与凭据、逐台同步、停用撤销和真实诊断。运行与运维说明见 [backend/README.md](backend/README.md)。新界面保留大圆角，使用玻璃质感与扁平线性图标；历史 HTML 原型仍保留作参考。
+在自有 Ubuntu VPS 上部署供 FlClash / Mihomo 使用的 HTTPS 代理订阅。国内及局域网直连，其余流量通过代理组转发。
 
-在自己的 Ubuntu 服务器上部署 FlClash / Mihomo 可用的个人代理订阅，提供 VLESS + REALITY、Trojan + TLS 和 Hysteria2。国内及局域网直连，其余流量通过代理组转发。
+- **单机部署**使用 `scripts/manage.py`。初次部署主 VLESS + REALITY 入口，可再发布备用 REALITY、Trojan + TLS、Hysteria2，以及可选的 HTTP / SOCKS5 over TLS。配置和部署步骤见下文。
+- **团队管理后台**接入香港、新加坡和美国三台已部署的 VPS。支持成员独立订阅和凭据、按地区同步、启停及撤销、固定出口、节点测速、诊断和操作审计。新成员默认每月 500 GB，按北京时间换月。支持累计额度和不限量。启用三地额度协调后，满额成员的代理会暂停，月度额度刷新后自动恢复。首次接入和运行步骤见 [后台运维说明](backend/README.md)。
+- **HTML 交互原型**可直接在本地浏览器打开 [`designs/panel-html/dist/index.html`](designs/panel-html/dist/index.html)。原型使用示例数据和浏览器本地存储。也可运行 `python3 designs/panel-html/preview.py` 后打开终端打印的地址。构建和预览细节见 [原型说明](designs/panel-html/README.md)。
 
-## 配置文件
+## 单机部署配置
 
-仓库中的 `.env.example` 使用文档示例 IP。复制一份作为本地配置后修改真实参数：
+仓库中的 `.env.example` 使用文档示例 IP。首次配置时，复制模板并填入实际参数。
 
 ```sh
 cp .env.example .env
@@ -21,7 +23,7 @@ chmod 600 .env
 | `VPN_SSH_USER` / `VPN_SSH_KEY` / `VPN_SSH_PORT` | SSH 用户、私钥路径和连接端口；密钥保留在本机 |
 | `VPN_AWS_REGION` / `VPN_AWS_SECURITY_GROUP_ID` / `VPN_AWS_INSTANCE_ID` | 私有部署记录及说明文档中的 AWS 信息；后两项可留空 |
 | `VPN_NODE_PREFIX` | 节点名称前缀，支持中文；`protocol` 样式下额外节点包含对应端口 |
-| `VPN_NODE_NAME_STYLE` | `protocol` 保留协议及端口后缀；`compact` 使用前缀加 01～04 编号，协议和端口仍记录在节点配置中 |
+| `VPN_NODE_NAME_STYLE` | `protocol` 显示协议和额外入口的端口。`compact` 按入口从 01 开始编号，启用 HTTP / SOCKS5 时编号继续递增 |
 | `VPN_AI_GROUP_NAME` / `VPN_AUTO_GROUP_NAME` / `VPN_RULES_GROUP_NAME` | 日常选择组、自动切换组和隐藏规则下载组的名称，支持中文 |
 | `VPN_REALITY_PORT` | 主 REALITY 及 HTTPS 订阅入口，默认 TCP 443 |
 | `VPN_REALITY_ALT_PORT` | 额外 REALITY 入口，默认 TCP 20001 |
@@ -31,7 +33,7 @@ chmod 600 .env
 | `VPN_HTTP_PORT` / `VPN_SOCKS5_PORT` | 可选 HTTP / SOCKS5 的 TLS 监听端口；默认 `0` 关闭。启用时自动生成独立账号密码，SOCKS5 仅支持 TCP 转发 |
 | `VPN_NGINX_TLS_PORT` | 内部 HTTPS 服务，默认仅监听 `127.0.0.1:8443` |
 | `VPN_HEALTHCHECK_URL` / `VPN_HEALTHCHECK_INTERVAL` / `VPN_HEALTHCHECK_TIMEOUT_MS` | 自动切换的检查地址、间隔（秒）、超时（毫秒） |
-| `VPN_VERIFICATION_INTERFACE` | 本机用于验收的物理网卡，如 macOS 的 `en0` 或 Linux 的 `eth0`；部署前必须填写 |
+| `VPN_VERIFICATION_INTERFACE` | 本机用于公网验收的物理网卡，如 `en0` 或 `eth0`。可用 `--interface` 临时覆盖 |
 | `VPN_EXPECTED_EXIT_COUNTRY` | 期望出口国家，默认 `US`；留空则只核对出口 IP |
 | `VPN_CERTIFICATE_WARNING_HOURS` | 证书剩余有效时间告警阈值，默认 48 小时 |
 
@@ -43,7 +45,7 @@ TCP 端口重复、无效 IPv4、未知变量名、重复赋值或非整数端�
 
 ## 本地检查
 
-本地维护端使用 macOS / Linux、Python 3.10+、OpenSSH 和 curl。部署、发布、规则更新及公网验收还需要已安装的 Mihomo：自动查找 PATH 中的 `mihomo` 或本项目 `.runtime/mihomo`，也可传入 `--mihomo /path/to/mihomo`。默认读取项目根目录的 `.env`：
+本地维护端使用 macOS / Linux、Python 3.10+、OpenSSH 和 curl。部署、准备额外入口、发布、规则更新及公网验收还需要 Mihomo。脚本依次查找 PATH 中的 `mihomo` 和 `.runtime/mihomo`，也可传入 `--mihomo /path/to/mihomo`。默认读取项目根目录的 `.env`。
 
 ```sh
 python3 scripts/manage.py check
@@ -70,11 +72,13 @@ Nginx、证书与系统服务的安装位置由脚本管理；现有网站服务
 
 规则校验使用 Python 3.14+ 的 `compression.zstd`；该模块不可用时使用 `zstd` 命令，检查解压完整性、MRS 版本、规则类型及非零规则数量。
 
-在 AWS 安全组中按实际配置放行 SSH、TCP 80、主入口，以及需要使用的额外入口。内部 Nginx 端口保持仅本机可达。修改配置里的端口后需同步调整安全组；`VPN_AWS_*` 变量用于记录部署信息。
+按实际配置在服务器防火墙和云防火墙（如 AWS 安全组）放行 SSH、TCP 80、主入口及需要使用的额外入口。内部 Nginx 端口保持仅本机可达。`VPN_AWS_*` 变量仅用于记录部署信息，网络放行规则需单独配置。
 
 ## 部署与订阅
 
 所有命令从本地项目目录运行。入口脚本通过 SSH 临时传送所需源文件和配置，远程工作目录结束后清理；部署参数保存为服务器上的 `/etc/self-vpn/deployment.env`，权限为 600。
+
+已纳入团队后台管理的服务器应通过后台同步成员配置。服务器写入 `team-managed` 标记后，单机 CLI 会拒绝 `deploy`、`add-nodes` 和 `publish`，以保护现有成员凭据。
 
 ```sh
 # 部署主入口、HTTPS 订阅和分流规则
@@ -140,30 +144,31 @@ python3 scripts/manage.py update-rules
 
 多节点配置使用隐藏的 `US-RULES` 回退组下载分流规则，优先 Hysteria2，其次 Trojan、REALITY 和其他已启用入口；日常流量仍由 `US-AI` / `US-AUTO` 选择。这可避免较大的规则文件在慢速 TCP 链路上触发下载超时。当前配置检查读取服务器实际发布的订阅，不根据本地新代码替代重建旧配置。
 
-## GitHub 提交准备
+## 提交前检查
 
-可以提交：源代码、测试、README、`.gitignore` 和 `.env.example`。
+仓库包含前后端源码、依赖锁文件、数据库迁移、部署脚本、测试和 HTML 原型。按本次改动选择需要暂存的文件。私有配置、`.env`、`.secrets/`、`.runtime/`、私钥、导出的订阅及生成的私人说明由 `.gitignore` 排除。
 
-私有配置、`.env`、`.secrets/`、`.runtime/`、PEM/KEY 私钥、导出的订阅及生成的私人说明已被忽略。准备提交时使用明确的文件列表：
+在现有 Git 仓库中启用提交钩子，并审阅暂存内容。
 
 ```sh
-git init -b main
-git add .gitignore .githooks README.md .env.example scripts tests
 git config --local core.hooksPath .githooks
 python3 scripts/check_public_files.py
 git diff --cached --stat
 git diff --cached
 ```
 
-检查脚本扫描 Git 暂存区中的实际内容，检测本地配置中的真实地址与凭据、公开服务器 IPv4、AWS 标识、私人订阅路径、UUID、私钥和个人主目录路径，并验证私有文件仍被忽略。检查通过后再由你执行提交和推送；不要使用 `git add -f` 加入私有文件。检查用于辅助审阅，不能发现所有形式的秘密，也不会清除已经存在的 Git 历史。
+检查脚本扫描 Git 索引中的文件内容，检测已知私有配置值、非示例公网 IPv4、AWS 标识、私人订阅路径、UUID、私钥和个人主目录路径，并验证私有文件的忽略规则。首次发布到公共仓库前还应审阅将推送的提交历史。
 
-启用提交钩子后，`git commit` 会先扫描敏感信息，再将**暂存区快照**导出到临时目录运行全部离线测试。工作目录中尚未暂存的修复不会掩盖待提交版本的问题。可直接运行 `.githooks/pre-commit` 验证钩子，无需创建提交。Git 允许用户显式绕过本地钩子，因此仍需正常审阅暂存区。
+提交钩子通过敏感信息扫描后，会在临时目录对 Git 索引快照运行 `tests/` 下的离线单元测试。也可直接运行 `.githooks/pre-commit` 检查待提交快照。后端测试和前端构建命令见 [后台验证说明](backend/README.md#验证)。
 
 ## 目录
 
 ```text
 .env.example                   可公开的示例配置
 .env                           本机真实配置（忽略）
+frontend/                       React / TypeScript 管理界面
+backend/                        FastAPI、数据库迁移、后台执行器和测试
+designs/panel-html/              独立 HTML 交互原型
 scripts/settings.py             参数读取、校验与公共配置接口
 scripts/manage.py               本地 SSH 部署入口
 scripts/operations.py           原子写入、部署锁、快照及恢复
@@ -172,6 +177,9 @@ scripts/verification.py         本机独立客户端公网验收
 scripts/routing_rules.py        分流规则下载、校验与独立更新
 scripts/deploy_server.py        主节点、HTTPS 和分流部署
 scripts/add_protocol_nodes.py   额外协议与候选订阅发布
+scripts/team_agent.py           团队成员同步与订阅发布
+scripts/traffic_stats.py        VPS 代理流量采样
+scripts/quota_control.py        跨地区额度协调与限额执行
 scripts/write_guide.py          生成私人使用说明
 scripts/check_public_files.py   暂存区敏感信息检查
 scripts/pre_commit.py           对暂存快照运行扫描和测试

@@ -9,6 +9,11 @@ def now():
 class Base(DeclarativeBase):
     pass
 
+class PanelSetting(Base):
+    __tablename__ = 'panel_settings'
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    value: Mapped[str] = mapped_column(String(60))
+
 class User(Base):
     __tablename__ = 'users'
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=identity)

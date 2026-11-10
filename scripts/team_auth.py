@@ -5,11 +5,24 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import re
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 USERS = Path('/etc/self-vpn/team-auth-users.json')
 TEAM_SUB = Path('/var/lib/self-vpn/team-subscriptions')
 LEGACY_SUB = Path('/var/lib/self-vpn/subscription')
+DEFAULT_SUBSCRIPTION_NAME = 'self-built-vpn'
+
+def normalize_subscription_name(name):
+    if not isinstance(name, str) or not name.isprintable() or '/' in name or '\\' in name:
+        raise ValueError('订阅名称须使用可见字符，且不能包含斜杠')
+    name = name.strip()
+    if not 1 <= len(name) <= 60 or name in {'.', '..'}:
+        raise ValueError('订阅名称须为 1 至 60 个字符，且不能是点或双点')
+    return name
+
+def subscription_disposition(name):
+    fallback = name if re.fullmatch(r'[A-Za-z0-9_. -]+', name) else DEFAULT_SUBSCRIPTION_NAME
+    return f'''attachment; filename="{fallback}"; filename*=UTF-8''{quote(name, safe='')}'''
 
 def authenticate(value, users):
     candidate = hashlib.sha256(value.encode()).hexdigest()
@@ -29,7 +42,7 @@ class Handler(BaseHTTPRequestHandler):
         self.subscription(True)
 
     def subscription(self, head):
-        from traffic_stats import DATA, POLICIES, STORE, public_snapshot, subscription_info
+        from traffic_stats import POLICIES, STORE, public_snapshot, subscription_info
         self.connection.settimeout(5)
         path = urlsplit(self.path).path
         try:
@@ -48,6 +61,7 @@ class Handler(BaseHTTPRequestHandler):
             if target.is_symlink():
                 raise FileNotFoundError
             content = target.read_bytes()
+            disposition = subscription_disposition(policies.get('subscription_name', DEFAULT_SUBSCRIPTION_NAME))
             header = None
             if policy and STORE.exists():
                 local = public_snapshot(json.loads(STORE.read_text()))
@@ -55,6 +69,7 @@ class Handler(BaseHTTPRequestHandler):
                 header = subscription_info(policy, snapshots)
             self.send_response(200)
             self.send_header('Content-Type', 'application/yaml; charset=utf-8')
+            self.send_header('Content-Disposition', disposition)
             self.send_header('Content-Length', str(len(content)))
             self.send_header('Cache-Control', 'private, no-store')
             self.send_header('profile-update-interval', '1')

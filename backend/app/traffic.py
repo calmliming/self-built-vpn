@@ -2,10 +2,17 @@
 from datetime import datetime, timezone, timedelta
 import json
 from sqlalchemy import select
-from .models import TrafficSnapshot, User
+from .models import PanelSetting, TrafficSnapshot, User
 from .security import unseal
 from . import remote  # Also registers the server scripts import path.
+from team_auth import DEFAULT_SUBSCRIPTION_NAME
 from traffic_stats import month_key, subscription_info
+
+SUBSCRIPTION_NAME_KEY = 'subscription_name'
+
+def subscription_name(db):
+    setting = db.get(PanelSetting, SUBSCRIPTION_NAME_KEY)
+    return setting.value if setting else DEFAULT_SUBSCRIPTION_NAME
 
 
 def traffic_policy(user):
@@ -17,6 +24,7 @@ def traffic_policy(user):
 
 def metadata(db, server_id):
     return {'server_id': server_id,
+            'subscription_name': subscription_name(db),
             'policies': [traffic_policy(user) for user in db.scalars(select(User).where(User.deleted == False))],
             'snapshots': {item.server_id: json.loads(item.data) for item in db.scalars(select(TrafficSnapshot)) if item.collected_at}}
 

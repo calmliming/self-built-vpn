@@ -61,6 +61,30 @@ def signed(client, username='admin'):
     client.headers['X-CSRF-Token'] = result.json()['csrf']
     return result.json()['user']
 
+def test_subscription_name_defaults_and_syncs_without_rotating_subscription(client, state):
+    from backend.app.traffic import metadata
+
+    endpoint = '/api/settings/subscription-name'
+    signed(client, 'member')
+    assert client.get('/api/dashboard').json()['subscription_name'] is None
+    assert client.patch(endpoint, json={'name': '不可修改'}).status_code == 403
+    client.post('/api/auth/logout')
+    signed(client)
+    ready_member(state[1])
+    original = client.get('/api/members').json()
+    assert client.get('/api/dashboard').json()['subscription_name'] == 'self-built-vpn'
+    for invalid in ['', ' ', '..', 'foo/bar', 'foo\\bar', 'foo\r\nInjected', 'a' * 61]:
+        assert client.patch(endpoint, json={'name': invalid}).status_code == 422
+    response = client.patch(endpoint, json={'name': ' 团队专用 '})
+    assert response.status_code == 200
+    assert response.json() == {'name': '团队专用'}
+    assert client.get('/api/dashboard').json()['subscription_name'] == '团队专用'
+    assert client.get('/api/members').json() == original
+    with SessionLocal() as db:
+        assert metadata(db, 'us')['subscription_name'] == '团队专用'
+        assert db.scalar(select(Task).where(Task.kind == 'traffic', Task.status == 'queued'))
+        assert db.scalar(select(Audit).where(Audit.action == '更新订阅名称')).target == '团队专用'
+
 def test_traffic_quota_requires_admin_and_keeps_credentials_and_usage(client, state):
     from traffic_stats import month_key
     signed(client, 'member')
